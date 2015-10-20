@@ -1,0 +1,10 @@
+# buildables
+build/
+
+# 3rd party
+node_modules/
+
+# bad
+.DS_Store
+*.swp
+tmp/
