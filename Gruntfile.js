@@ -48,7 +48,7 @@ module.exports = function (grunt) {
             jscs: {
                 dist: [
                     "Gruntfile.js",
-                    "src/js/**/*.js"
+                    "src/**/*.js"
                 ],
                 options: {
                     config: true
@@ -62,6 +62,9 @@ module.exports = function (grunt) {
                 dist: {
                     files: {
                         "build/cmi5.js": [
+                            "vendor/URI.js/src/punycode.js",
+                            "vendor/URI.js/src/URI.js",
+                            "node_modules/tincanjs/build/tincan.js",
                             "src/cmi5.js"
                         ]
                     }

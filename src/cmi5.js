@@ -1,4 +1,4 @@
-var CMI5;
+var Cmi5;
 
 (function () {
     /* globals window, XMLHttpRequest, XDomainRequest */
@@ -9,15 +9,29 @@ var CMI5;
         __delay,
         env = {},
         STATE_LMS_LAUNCHDATA = "LMS.LaunchData",
-        CATEGORY_ACTIVITY_CMI5 = { id: "http://purl.org/xapi/cmi5/context/categories/cmi5" },
-        CATEGORY_ACTIVITY_MOVEON = { id: "http://purl.org/xapi/cmi5/context/categories/moveon" },
-        EXTENSION_SESSION_ID = { id: "http://purl.org/xapi/cmi5/context/extensions/sessionid" },
+        AGENT_PROFILE_LEARNER_PREFS = "CMI5LearnerPreferences",
+        CATEGORY_ACTIVITY_CMI5 = {
+            id: "http://purl.org/xapi/cmi5/context/categories/cmi5"
+        },
+        CATEGORY_ACTIVITY_MOVEON = {
+            id: "http://purl.org/xapi/cmi5/context/categories/moveon"
+        },
+        EXTENSION_SESSION_ID = {
+            id: "http://purl.org/xapi/cmi5/context/extensions/sessionid"
+        },
         VERB_INITIALIZED_ID = "http://adlnet.gov/expapi/verbs/initialized",
         VERB_TERMINATED_ID = "http://adlnet.gov/expapi/verbs/terminated",
         VERB_COMPLETED_ID = "http://adlnet.gov/expapi/verbs/completed",
         VERB_PASSED_ID = "http://adlnet.gov/expapi/verbs/passed",
         VERB_FAILED_ID = "http://adlnet.gov/expapi/verbs/failed",
-        VERB_ANSWERED_ID = "http://adlnet.gov/expapi/verbs/answered";
+        VERB_ANSWERED_ID = "http://adlnet.gov/expapi/verbs/answered",
+        launchParameters = [
+            "endpoint",
+            "fetch",
+            "actor",
+            "activityId",
+            "registration"
+        ];
 
     //
     // Detect CORS and XDR support
@@ -34,22 +48,32 @@ var CMI5;
     }
 
     /**
-        CMI5 base object
+        Cmi5 base object
 
-        @module CMI5
+        @module Cmi5
     */
-    CMI5 = function (launchString) {
-        this.log("CMI5 constructor", launchString);
-        var url = new URI(launchString),
+    Cmi5 = function (launchString) {
+        this.log("constructor", launchString);
+        var url,
+            cfg,
+            i;
+
+        if (typeof launchString !== "undefined") {
+            url = new URI(launchString);
             cfg = url.search(true);
 
-        // TODO: should validate launch string well formed?
+            for (i = 0; i < launchParameters.length; i += 1) {
+                if (typeof cfg[launchParameters[i]] === "undefined" || cfg[launchParameters[i]] === "") {
+                    throw new Error("Invalid launch string missing or empty parameter: " + launchParameters[i]);
+                }
+            }
 
-        this.setFetch(cfg.fetch);
-        this.setLRS(cfg.endpoint);
-        this.setActor(cfg.actor);
-        this.setActivity(cfg.activityId);
-        this.setRegistration(cfg.registration);
+            this.setFetch(cfg.fetch);
+            this.setLRS(cfg.endpoint);
+            this.setActor(cfg.actor);
+            this.setActivity(cfg.activityId);
+            this.setRegistration(cfg.registration);
+        }
     };
 
     /**
@@ -57,9 +81,9 @@ var CMI5;
         @static
         @default false
     */
-    CMI5.DEBUG = true;
+    Cmi5.DEBUG = false;
 
-    CMI5.prototype = {
+    Cmi5.prototype = {
         _fetch: null,
         _endpoint: null,
         _actor: null,
@@ -71,6 +95,56 @@ var CMI5;
         _terminated: null,
         _lmsLaunchData: null,
         _contextTemplate: null,
+        _learnerPrefs: null,
+
+        /**
+            @method start
+        */
+        start: function (callback) {
+            this.log("start");
+            var self = this;
+
+            // TODO: add "event" based callback handling at each stage
+            self.postFetch(
+                function (err) {
+                    var prefix = "Failed to start AU - ";
+
+                    if (err !== null) {
+                        callback(new Error(prefix + " POST to fetch: " + err));
+                        return;
+                    }
+
+                    self.loadLMSLaunchData(
+                        function (err) {
+                            if (err !== null) {
+                                callback(new Error(prefix + " load LMS LaunchData: " + err));
+                                return;
+                            }
+
+                            self.loadLearnerPrefs(
+                                function (err) {
+                                    if (err !== null) {
+                                        callback(new Error(prefix + " load learner preferences: " + err));
+                                        return;
+                                    }
+
+                                    self.initialize(
+                                        function (err) {
+                                            if (err !== null) {
+                                                callback(new Error(prefix + " send initialized statement: " + err));
+                                                return;
+                                            }
+
+                                            callback(null);
+                                        }
+                                    );
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        },
 
         /**
             @method postFetch
@@ -81,24 +155,69 @@ var CMI5;
                 cbWrapper;
 
             if (callback) {
-                cbWrapper = function (err, response) {
+                cbWrapper = function (err, xhr) {
                     self.log("postFetch::cbWrapper");
                     self.log("postFetch::cbWrapper", err);
-                    self.log("postFetch::cbWrapper", response);
-                    var auth;
-                    if (err === null) {
-                        try {
-                            auth = JSON.parse(response.responseText);
-                        }
-                        catch (ex) {
-                            self.log("postFetch::cbWrapper - failed to parse JSON response: " + ex);
-                            callback("Post fetch failed to parse JSON response: " + ex, response);
-                        }
+                    self.log("postFetch::cbWrapper", xhr);
+                    var parsed,
+                        responseContent = xhr.responseText,
+                        responseContentType;
 
-                        self._lrs.auth = "Basic " + auth["auth-token"];
+                    if (err !== null) {
+                        if (err === 0) {
+                            err = "Aborted, offline, or invalid CORS endpoint";
+                        }
+                        else if (/^\d+$/.test(err)) {
+                            if (typeof xhr.getResponseHeader !== "undefined") {
+                                responseContentType = xhr.getResponseHeader("Content-Type");
+                            }
+                            else if (typeof xhr.contentType !== "undefined") {
+                                responseContentType = xhr.contentType;
+                            }
+                            if (TinCan.Utils.isApplicationJSON(responseContentType)) {
+                                try {
+                                    parsed = JSON.parse(responseContent);
+
+                                    if (typeof parsed["error-text"] !== "undefined") {
+                                        err = parsed["error-text"] + " (" + parsed["error-code"] + ")";
+                                    }
+                                    else {
+                                        err = "Failed to detect 'error-text' property in JSON error response";
+                                    }
+                                }
+                                catch (ex) {
+                                    err = "Failed to parse JSON error response: " + ex;
+                                }
+                            }
+                            else {
+                                err = xhr.responseText;
+                            }
+                        }
+                        else {
+                            err = xhr.responseText;
+                        }
+                        callback(err, xhr);
+                        return;
                     }
 
-                    callback(err, response);
+                    try {
+                        parsed = JSON.parse(responseContent);
+                    }
+                    catch (ex) {
+                        self.log("postFetch::cbWrapper - failed to parse JSON response: " + ex);
+                        callback("Post fetch response malformed: failed to parse JSON response (" + ex + ")", xhr);
+                        return;
+                    }
+
+                    if (parsed === null || typeof parsed !== "object" || typeof parsed["auth-token"] === "undefined") {
+                        self.log("postFetch::cbWrapper - failed to access 'auth-token' property");
+                        callback("Post fetch response malformed: failed to access 'auth-token' in (" + responseContent + ")", xhr);
+                        return;
+                    }
+
+                    self._lrs.auth = "Basic " + parsed["auth-token"];
+
+                    callback(err, xhr);
                 };
             }
 
@@ -145,6 +264,38 @@ var CMI5;
         },
 
         /**
+            @method loadLearnerPrefs
+        */
+        loadLearnerPrefs: function (callback) {
+            this.log("loadLearnerPrefs");
+            var self = this;
+
+            this._lrs.retrieveAgentProfile(
+                AGENT_PROFILE_LEARNER_PREFS,
+                {
+                    agent: this._actor,
+                    callback: function (err, result) {
+                        if (err !== null) {
+                            callback(err, result);
+                            return;
+                        }
+
+                        //
+                        // result is null when the profile 404s which is not an error,
+                        // just means it hasn't been set to anything
+                        //
+                        if (result !== null) {
+                            // TODO: check well formedness, set local properties
+                            self._learnerPrefs = result.contents;
+                        }
+
+                        callback(null, result);
+                    }
+                }
+            );
+        },
+
+        /**
             @method initialize
         */
         initialize: function (callback) {
@@ -183,6 +334,31 @@ var CMI5;
                 }
 
                 this.log("terminate - already terminated");
+            }
+
+            if (callback) {
+                callback(null);
+            }
+
+            return;
+        },
+
+        /**
+            @method complete
+        */
+        complete: function (callback) {
+            this.log("complete");
+            var st;
+
+            if (this._initialized) {
+                if (! this._completed && ! this._terminated) {
+                    this._completed = true;
+
+                    st = this._prepareStatement(VERB_COMPLETED_ID);
+                    return this._sendStatement(st, callback);
+                }
+
+                this.log("complete - already completed or terminated");
             }
 
             if (callback) {
@@ -251,7 +427,8 @@ var CMI5;
         */
         log: function () {
             /* globals console */
-            if (CMI5.DEBUG && typeof console !== "undefined" && console.log) {
+            if (Cmi5.DEBUG && typeof console !== "undefined" && console.log) {
+                arguments[0] = "cmi5.js:" + arguments[0];
                 console.log.apply(console, arguments);
             }
         },
@@ -299,6 +476,7 @@ var CMI5;
             }
 
             isXD = (
+
                 // is same scheme?
                 ! schemeMatches
 
@@ -307,7 +485,10 @@ var CMI5;
 
                 // is same port?
                 || locationPort !== (
-                    (urlParts[3] !== null && typeof urlParts[3] !== "undefined" && urlParts[3] !== "") ? urlParts[3] : (urlParts[1] === "http:" ? "80" : (urlParts[1] === "https:" ? "443" : ""))
+                    (urlParts[3] !== null && typeof urlParts[3] !== "undefined" && urlParts[3] !== "")
+                        ? urlParts[3]
+                        : (urlParts[1] === "http:" ? "80" : (urlParts[1] === "https:" ? "443" : "")
+                    )
                 )
             );
             if (isXD) {
@@ -338,6 +519,13 @@ var CMI5;
         },
 
         /**
+            @method getFetch
+        */
+        getFetch: function () {
+            return this._fetchURL;
+        },
+
+        /**
             @method setLRS
         */
         setLRS: function (endpoint, auth) {
@@ -351,7 +539,7 @@ var CMI5;
                 }
             }
             else {
-                this._lrs = new TinCan.LRS (
+                this._lrs = new TinCan.LRS(
                     {
                         endpoint: endpoint,
                         auth: auth,
@@ -386,7 +574,11 @@ var CMI5;
             @method setActivity
         */
         setActivity: function (activityId) {
-            this._activity = new TinCan.Activity({ id: activityId });
+            this._activity = new TinCan.Activity(
+                {
+                    id: activityId
+                }
+            );
         },
 
         /**
@@ -428,7 +620,6 @@ var CMI5;
         },
 
         _prepareStatement: function (verbId) {
-            //this.log("_prepareStatement", verbId);
             var stCfg = {
                 actor: this._actor,
                 verb: {
@@ -438,7 +629,7 @@ var CMI5;
                 context: this._prepareContext()
             };
 
-            return new TinCan.Statement(stCfg, { doStamp: false });
+            return new TinCan.Statement(stCfg);
         },
 
         _sendStatement: function (st, callback) {
@@ -457,7 +648,12 @@ var CMI5;
                 };
             }
 
-            result = this._lrs.saveStatement(st, { callback: cbWrapper });
+            result = this._lrs.saveStatement(
+                st,
+                {
+                    callback: cbWrapper
+                }
+            );
             if (! callback) {
                 return {
                     response: result,
@@ -473,8 +669,10 @@ var CMI5;
         @method enableDebug
         @static
     */
-    CMI5.enableDebug = function () {
-        CMI5.DEBUG = true;
+    Cmi5.enableDebug = function () {
+        Cmi5.DEBUG = true;
+
+        TinCan.enableDebug();
     };
 
     /**
@@ -483,8 +681,10 @@ var CMI5;
         @method disableDebug
         @static
     */
-    CMI5.disableDebug = function () {
-        CMI5.DEBUG = false;
+    Cmi5.disableDebug = function () {
+        Cmi5.DEBUG = false;
+
+        TinCan.disableDebug();
     };
 
     //
@@ -540,7 +740,7 @@ var CMI5;
                     this.log("[warning] There was a problem communicating with the server. Aborted, offline, or invalid CORS endpoint (" + httpStatus + ")");
                 }
                 else {
-                    this.log("[warning] There was a problem communicating with the server. (" + httpStatus + " | " + xhr.responseText+ ")");
+                    this.log("[warning] There was a problem communicating with the server. (" + httpStatus + " | " + xhr.responseText + ")");
                 }
                 if (callback) {
                     callback(httpStatus, xhr);
@@ -554,7 +754,7 @@ var CMI5;
     };
 
     //
-    // one of the two of these is stuffed into the CMI5 instance where a
+    // one of the two of these is stuffed into the Cmi5 instance where a
     // request is needed which is fetch at the moment
     //
     nativeRequest = function (fullUrl, cfg, callback) {
@@ -571,6 +771,7 @@ var CMI5;
             async,
             fullRequest = fullUrl,
             err;
+
         this.log("sendRequest using XMLHttpRequest - async: " + async);
 
         cfg = cfg || {};
@@ -669,7 +870,7 @@ var CMI5;
         }
         fullUrl = fullRequest;
 
-        xhr = new XDomainRequest ();
+        xhr = new XDomainRequest();
         xhr.open("POST", fullUrl);
 
         if (! callback) {
@@ -727,7 +928,6 @@ var CMI5;
             this.log("sendRequest - until: " + until + ", finished: " + control.finished);
 
             while (Date.now() < until && control.fakeStatus === null) {
-                //this.log("calling __delay");
                 __delay();
             }
             return requestComplete.call(self, xhr, cfg, control);
@@ -752,9 +952,9 @@ var CMI5;
         // removing this made the while loop too tight to allow the asynchronous
         // events through to get handled so that the response was correctly handled
         //
-        var xhr = new XMLHttpRequest (),
-            url = window.location + "?forcenocache=" + TinCan.Utils.getUUID()
-        ;
+        var xhr = new XMLHttpRequest(),
+            url = window.location + "?forcenocache=" + TinCan.Utils.getUUID();
+
         xhr.open("GET", url, false);
         xhr.send(null);
     };
