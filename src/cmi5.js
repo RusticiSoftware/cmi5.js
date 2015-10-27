@@ -9,6 +9,7 @@ var Cmi5;
         __delay,
         env = {},
         STATE_LMS_LAUNCHDATA = "LMS.LaunchData",
+        LAUNCH_MODE_NORMAL = "Normal",
         AGENT_PROFILE_LEARNER_PREFS = "CMI5LearnerPreferences",
         CATEGORY_ACTIVITY_CMI5 = {
             id: "http://purl.org/xapi/cmi5/context/categories/cmi5"
@@ -91,11 +92,21 @@ var Cmi5;
         _activity: null,
 
         _lrs: null,
-        _initialized: null,
-        _terminated: null,
         _lmsLaunchData: null,
         _contextTemplate: null,
         _learnerPrefs: null,
+        _inProgress: false,
+        _initialized: null,
+        _completed: null,
+        _terminated: null,
+
+        //
+        // _passed and _failed are zero instead of null so that we
+        // can keep track of the number of times each has been set
+        // mostly to check against passIsFinal
+        //
+        _passed: 0,
+        _failed: 0,
 
         /**
             @method start
@@ -196,7 +207,7 @@ var Cmi5;
                         else {
                             err = xhr.responseText;
                         }
-                        callback(err, xhr);
+                        callback(err, xhr, parsed);
                         return;
                     }
 
@@ -211,13 +222,13 @@ var Cmi5;
 
                     if (parsed === null || typeof parsed !== "object" || typeof parsed["auth-token"] === "undefined") {
                         self.log("postFetch::cbWrapper - failed to access 'auth-token' property");
-                        callback("Post fetch response malformed: failed to access 'auth-token' in (" + responseContent + ")", xhr);
+                        callback("Post fetch response malformed: failed to access 'auth-token' in (" + responseContent + ")", xhr, parsed);
                         return;
                     }
 
                     self._lrs.auth = "Basic " + parsed["auth-token"];
 
-                    callback(err, xhr);
+                    callback(err, xhr, parsed);
                 };
             }
 
@@ -300,22 +311,27 @@ var Cmi5;
         */
         initialize: function (callback) {
             this.log("initialize");
-            var st;
+            var st,
+                err;
 
-            if (! this._initialized) {
-                this._initialized = true;
 
-                st = this._prepareStatement(VERB_INITIALIZED_ID);
-                return this._sendStatement(st, callback);
+            if (this._initialized) {
+                this.log("initialize - already initialized");
+
+                err = new Error("AU already initialized");
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
             }
 
-            this.log("initialize - already initialized");
+            this._initialized = true;
+            this._inProgress = true;
 
-            if (callback) {
-                callback(null);
-            }
-
-            return;
+            st = this._prepareStatement(VERB_INITIALIZED_ID);
+            return this._sendStatement(st, callback);
         },
 
         /**
@@ -323,72 +339,88 @@ var Cmi5;
         */
         terminate: function (callback) {
             this.log("terminate");
-            var st;
+            var st,
+                err;
 
-            if (this._initialized) {
-                if (! this._terminated) {
-                    this._terminated = true;
-
-                    st = this._prepareStatement(VERB_TERMINATED_ID);
-                    return this._sendStatement(st, callback);
-                }
-
-                this.log("terminate - already terminated");
-            }
-
-            if (callback) {
-                callback(null);
-            }
-
-            return;
-        },
-
-        /**
-            @method complete
-        */
-        complete: function (callback) {
-            this.log("complete");
-            var st;
-
-            if (this._initialized) {
-                if (! this._completed && ! this._terminated) {
-                    this._completed = true;
-
-                    st = this._prepareStatement(VERB_COMPLETED_ID);
-                    return this._sendStatement(st, callback);
-                }
-
-                this.log("complete - already completed or terminated");
-            }
-
-            if (callback) {
-                callback(null);
-            }
-
-            return;
-        },
-
-        /**
-            @method inProgress
-        */
-        inProgress: function (callback) {
-            this.log("inProgress");
             if (! this._initialized) {
-                this.log("inProgress - not initialized");
+                this.log("terminate - not initialized");
+
+                err = new Error("AU not initialized");
                 if (callback) {
-                    callback("AU not in progress");
+                    callback(err);
+                    return;
                 }
-                return false;
-            }
-            if (this._terminated) {
-                this.log("inProgress - already terminated");
-                if (callback) {
-                    callback("AU already terminated");
-                }
-                return false;
+
+                throw err;
             }
 
-            return true;
+            if (this._terminated) {
+                this.log("terminate - already terminated");
+
+                err = new Error("AU already terminated");
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            this._terminated = true;
+            this._inProgress = false;
+
+            st = this._prepareStatement(VERB_TERMINATED_ID);
+            return this._sendStatement(st, callback);
+        },
+
+        /**
+            @method completed
+        */
+        completed: function (callback) {
+            this.log("completed");
+            var st,
+                err;
+
+            if (! this.inProgress()) {
+                this.log("completed - not active");
+                err = new Error("AU not active");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this.getLaunchMode() !== LAUNCH_MODE_NORMAL) {
+                this.log("completed - non-Normal launch mode: ", this.getLaunchMode());
+                err = new Error("AU not in Normal launch mode");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this._completed) {
+                this.log("completed - already completed");
+                err = new Error("AU already completed");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            this._completed = true;
+
+            st = this._prepareStatement(VERB_COMPLETED_ID);
+            return this._sendStatement(st, callback);
         },
 
         /**
@@ -396,6 +428,49 @@ var Cmi5;
         */
         passed: function (callback) {
             this.log("passed");
+            var st,
+                err;
+
+            if (! this.inProgress()) {
+                this.log("passed - not active");
+                err = new Error("AU not active");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this.getLaunchMode() !== LAUNCH_MODE_NORMAL) {
+                this.log("passed - non-Normal launch mode: ", this.getLaunchMode());
+                err = new Error("AU not in Normal launch mode");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if ((this._failed !== 0 || this._passed !== 0) && this.getPassIsFinal()) {
+                this.log("passed - already passed/failed and passIsFinal");
+                err = new Error("AU already passed/failed and passIsFinal");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            this._passed += true;
+
+            st = this._prepareStatement(VERB_PASSED_ID);
+            return this._sendStatement(st, callback);
         },
 
         /**
@@ -404,19 +479,56 @@ var Cmi5;
         failed: function (callback) {
             this.log("failed");
             var st,
-                sendResult;
+                err;
 
-            if (! this.inProgress(callback)) {
-                return ;
+            if (! this.inProgress()) {
+                this.log("failed - not active");
+                err = new Error("AU not active");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
             }
 
-            // TODO: need to check passIsFinal?
+            if (this.getLaunchMode() !== LAUNCH_MODE_NORMAL) {
+                this.log("failed - non-Normal launch mode: ", this.getLaunchMode());
+                err = new Error("AU not in Normal launch mode");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if ((this._failed !== 0 || this._passed !== 0) && this.getPassIsFinal()) {
+                this.log("failed - already passed/failed and passIsFinal");
+                err = new Error("AU already passed/failed and passIsFinal");
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            this._failed += true;
 
             st = this._prepareStatement(VERB_FAILED_ID);
-            sendResult = this._sendStatement(st, callback);
+            return this._sendStatement(st, callback);
+        },
 
-            // TODO: what do we return?
-            return sendResult;
+        /**
+            @method inProgress
+        */
+        inProgress: function () {
+            this.log("inProgress");
+            return this._inProgress;
         },
 
         /**
@@ -431,6 +543,36 @@ var Cmi5;
                 arguments[0] = "cmi5.js:" + arguments[0];
                 console.log.apply(console, arguments);
             }
+        },
+
+        /**
+            @method getLaunchMode
+        */
+        getLaunchMode: function () {
+            this.log("getLaunchMode");
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine launchMode until LMS LaunchData has been loaded");
+            }
+
+            return this._lmsLaunchData.launchMode;
+        },
+
+        /**
+            @method getPassIsFinal
+        */
+        getPassIsFinal: function () {
+            this.log("getPassIsFinal");
+            var result = true;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine passIsFinal until LMS LaunchData has been loaded");
+            }
+
+            if (typeof this._lmsLaunchData.passIsFinal !== "undefined") {
+                result = this._lmsLaunchData.passIsFinal;
+            }
+
+            return result;
         },
 
         /**
