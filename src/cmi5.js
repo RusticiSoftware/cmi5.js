@@ -111,15 +111,20 @@ var Cmi5;
         /**
             @method start
         */
-        start: function (callback) {
+        start: function (callback, events) {
             this.log("start");
             var self = this;
 
-            // TODO: add "event" based callback handling at each stage
+            events = events || {};
+
             self.postFetch(
                 function (err) {
-                    var prefix = "Failed to start AU - ";
+                    var prefix = "Failed to start AU - ",
+                        result;
 
+                    if (typeof events.postFetch !== "undefined") {
+                        events.postFetch.apply(this, arguments);
+                    }
                     if (err !== null) {
                         callback(new Error(prefix + " POST to fetch: " + err));
                         return;
@@ -127,6 +132,9 @@ var Cmi5;
 
                     self.loadLMSLaunchData(
                         function (err) {
+                            if (typeof events.launchData !== "undefined") {
+                                events.launchData.apply(this, arguments);
+                            }
                             if (err !== null) {
                                 callback(new Error(prefix + " load LMS LaunchData: " + err));
                                 return;
@@ -134,6 +142,9 @@ var Cmi5;
 
                             self.loadLearnerPrefs(
                                 function (err) {
+                                    if (typeof events.learnerPrefs !== "undefined") {
+                                        events.learnerPrefs.apply(this, arguments);
+                                    }
                                     if (err !== null) {
                                         callback(new Error(prefix + " load learner preferences: " + err));
                                         return;
@@ -141,6 +152,9 @@ var Cmi5;
 
                                     self.initialize(
                                         function (err) {
+                                            if (typeof events.initializeStatement !== "undefined") {
+                                                events.initializeStatement.apply(this, arguments);
+                                            }
                                             if (err !== null) {
                                                 callback(new Error(prefix + " send initialized statement: " + err));
                                                 return;
@@ -546,6 +560,18 @@ var Cmi5;
         },
 
         /**
+            @method getLaunchMethod
+        */
+        getLaunchMethod: function () {
+            this.log("getLaunchMethod");
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine launchMethod until LMS LaunchData has been loaded");
+            }
+
+            return this._lmsLaunchData.launchMethod;
+        },
+
+        /**
             @method getLaunchMode
         */
         getLaunchMode: function () {
@@ -555,6 +581,36 @@ var Cmi5;
             }
 
             return this._lmsLaunchData.launchMode;
+        },
+
+        /**
+            @method getLaunchParameters
+        */
+        getLaunchParameters: function () {
+            this.log("getLaunchParameters");
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine LaunchParameters until LMS LaunchData has been loaded");
+            }
+
+            if (typeof this._lmsLaunchData.launchParameters !== "undefined") {
+                result = this._lmsLaunchData.launchParameters;
+            }
+
+            return result;
+        },
+
+        /**
+            @method getSessionId
+        */
+        getSessionId: function () {
+            this.log("getSessionId");
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine launchMode until LMS LaunchData has been loaded");
+            }
+
+            return this._lmsLaunchData.contextTemplate.extensions[EXTENSION_SESSION_ID.id];
         },
 
         /**
@@ -570,6 +626,77 @@ var Cmi5;
 
             if (typeof this._lmsLaunchData.passIsFinal !== "undefined") {
                 result = this._lmsLaunchData.passIsFinal;
+            }
+
+            return result;
+        },
+
+        /**
+            @method getMoveOn
+        */
+        getMoveOn: function () {
+            this.log("getMoveOn");
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine moveOn until LMS LaunchData has been loaded");
+            }
+
+            return this._lmsLaunchData.moveOn;
+        },
+
+        /**
+            @method getMasteryScore
+        */
+        getMasteryScore: function () {
+            this.log("getMasteryScore");
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine masteryScore until LMS LaunchData has been loaded");
+            }
+
+            if (typeof this._lmsLaunchData.masteryScore !== "undefined") {
+                result = this._lmsLaunchData.masteryScore;
+            }
+
+            return result;
+        },
+
+        /**
+            @method getReturnUrl
+        */
+        getReturnUrl: function () {
+            this.log("getReturnUrl");
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine returnUrl until LMS LaunchData has been loaded");
+            }
+
+            if (typeof this._lmsLaunchData.returnUrl !== "undefined") {
+                result = this._lmsLaunchData.returnUrl;
+            }
+
+            return result;
+        },
+
+        /**
+            @method getEntitlementKey
+        */
+        getEntitlementKey: function () {
+            this.log("getEntitlementKey");
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error("Can't determine entitlementKey until LMS LaunchData has been loaded");
+            }
+
+            if (typeof this._lmsLaunchData.entitlementKey !== "undefined") {
+                if (typeof this._lmsLaunchData.entitlementKey.alternate !== "undefined") {
+                    result = this._lmsLaunchData.entitlementKey.alternate;
+                }
+                else if (typeof this._lmsLaunchData.entitlementKey.courseStructure !== "undefined") {
+                    result = this._lmsLaunchData.entitlementKey.courseStructure;
+                }
             }
 
             return result;
