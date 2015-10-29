@@ -92,6 +92,8 @@ var Cmi5;
         _activity: null,
 
         _lrs: null,
+        _fetchRequest: null,
+        _fetchContent: null,
         _lmsLaunchData: null,
         _contextTemplate: null,
         _learnerPrefs: null,
@@ -179,6 +181,11 @@ var Cmi5;
             var self = this,
                 cbWrapper;
 
+            if (this._fetch === null) {
+                callback(new Error("Can't POST to fetch URL without setFetch"));
+                return;
+            }
+
             if (callback) {
                 cbWrapper = function (err, xhr) {
                     self.log("postFetch::cbWrapper");
@@ -221,7 +228,7 @@ var Cmi5;
                         else {
                             err = xhr.responseText;
                         }
-                        callback(err, xhr, parsed);
+                        callback(new Error(err), xhr, parsed);
                         return;
                     }
 
@@ -230,16 +237,17 @@ var Cmi5;
                     }
                     catch (ex) {
                         self.log("postFetch::cbWrapper - failed to parse JSON response: " + ex);
-                        callback("Post fetch response malformed: failed to parse JSON response (" + ex + ")", xhr);
+                        callback(new Error("Post fetch response malformed: failed to parse JSON response (" + ex + ")"), xhr);
                         return;
                     }
 
                     if (parsed === null || typeof parsed !== "object" || typeof parsed["auth-token"] === "undefined") {
                         self.log("postFetch::cbWrapper - failed to access 'auth-token' property");
-                        callback("Post fetch response malformed: failed to access 'auth-token' in (" + responseContent + ")", xhr, parsed);
+                        callback(new Error("Post fetch response malformed: failed to access 'auth-token' in (" + responseContent + ")"), xhr, parsed);
                         return;
                     }
 
+                    self._fetchContent = parsed;
                     self._lrs.auth = "Basic " + parsed["auth-token"];
 
                     callback(err, xhr, parsed);
@@ -247,7 +255,7 @@ var Cmi5;
             }
 
             return this._fetchRequest(
-                this._fetchURL,
+                this._fetch,
                 {
                     method: "POST"
                 },
@@ -262,6 +270,11 @@ var Cmi5;
             this.log("loadLMSLaunchData");
             var self = this;
 
+            if (this._fetchContent === null) {
+                callback(new Error("Can't retrieve LMS Launch Data without successful postFetch"));
+                return;
+            }
+
             this._lrs.retrieveState(
                 STATE_LMS_LAUNCHDATA,
                 {
@@ -270,7 +283,17 @@ var Cmi5;
                     registration: this._registration,
                     callback: function (err, result) {
                         if (err !== null) {
-                            callback(err, result);
+                            callback(new Error("Failed to retrieve " + STATE_LMS_LAUNCHDATA + " State: " + err), result);
+                            return;
+                        }
+
+                        //
+                        // a missing state isn't an error as far as TinCanJS is concerned, but
+                        // getting a 404 on the LMS LaunchData is a problem in cmi5 so fail here
+                        // in that case (which is when result is null)
+                        //
+                        if (result === null) {
+                            callback(new Error(STATE_LMS_LAUNCHDATA + " State not found"), result);
                             return;
                         }
 
@@ -295,13 +318,18 @@ var Cmi5;
             this.log("loadLearnerPrefs");
             var self = this;
 
+            if (this._lmsLaunchData === null) {
+                callback(new Error("Can't retrieve Learner Preferences without successful loadLMSLaunchData"));
+                return;
+            }
+
             this._lrs.retrieveAgentProfile(
                 AGENT_PROFILE_LEARNER_PREFS,
                 {
                     agent: this._actor,
                     callback: function (err, result) {
                         if (err !== null) {
-                            callback(err, result);
+                            callback(new Error("Failed to retrieve " + AGENT_PROFILE_LEARNER_PREFS + " Agent Profile" + err), result);
                             return;
                         }
 
@@ -310,8 +338,14 @@ var Cmi5;
                         // just means it hasn't been set to anything
                         //
                         if (result !== null) {
-                            // TODO: check well formedness, set local properties
                             self._learnerPrefs = result.contents;
+                        }
+                        else {
+                            //
+                            // store an empty object locally to be able to distinguish a non-set
+                            // preference document vs a non-fetched preference document
+                            //
+                            self._learnerPrefs = {};
                         }
 
                         callback(null, result);
@@ -328,6 +362,15 @@ var Cmi5;
             var st,
                 err;
 
+            if (this._learnerPrefs === null) {
+                err = new Error("Can't send initialized statement without successful loadLearnerPrefs");
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
 
             if (this._initialized) {
                 this.log("initialize - already initialized");
@@ -703,6 +746,42 @@ var Cmi5;
         },
 
         /**
+            @method getLanguagePreference
+        */
+        getLanguagePreference: function () {
+            this.log("getLanguagePreference");
+            var result = null;
+
+            if (this._learnerPrefs === null) {
+                throw new Error("Can't determine language preference until learner preferences have been loaded");
+            }
+
+            if (typeof this._learnerPrefs.languagePreference !== "undefined") {
+                result = this._learnerPrefs.languagePreference;
+            }
+
+            return result;
+        },
+
+        /**
+            @method getAudioPreference
+        */
+        getAudioPreference: function () {
+            this.log("getAudioPreference");
+            var result = null;
+
+            if (this._learnerPrefs === null) {
+                throw new Error("Can't determine audio preference until learner preferences have been loaded");
+            }
+
+            if (typeof this._learnerPrefs.audioPreference !== "undefined") {
+                result = this._learnerPrefs.audioPreference;
+            }
+
+            return result;
+        },
+
+        /**
             @method setFetch
         */
         setFetch: function (fetchURL) {
@@ -712,7 +791,7 @@ var Cmi5;
                 locationPort,
                 isXD;
 
-            this._fetchURL = fetchURL;
+            this._fetch = fetchURL;
 
             //
             // default to native request mode
@@ -791,7 +870,7 @@ var Cmi5;
             @method getFetch
         */
         getFetch: function () {
-            return this._fetchURL;
+            return this._fetch;
         },
 
         /**
