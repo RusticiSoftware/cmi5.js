@@ -11,12 +11,16 @@ var Cmi5;
         STATE_LMS_LAUNCHDATA = "LMS.LaunchData",
         LAUNCH_MODE_NORMAL = "Normal",
         AGENT_PROFILE_LEARNER_PREFS = "CMI5LearnerPreferences",
-        CATEGORY_ACTIVITY_CMI5 = {
-            id: "http://purl.org/xapi/cmi5/context/categories/cmi5"
-        },
-        CATEGORY_ACTIVITY_MOVEON = {
-            id: "http://purl.org/xapi/cmi5/context/categories/moveon"
-        },
+        CATEGORY_ACTIVITY_CMI5 = new TinCan.Activity(
+            {
+                id: "http://purl.org/xapi/cmi5/context/categories/cmi5"
+            }
+        ),
+        CATEGORY_ACTIVITY_MOVEON = new TinCan.Activity(
+            {
+                id: "http://purl.org/xapi/cmi5/context/categories/moveon"
+            }
+        ),
         EXTENSION_SESSION_ID = {
             id: "http://purl.org/xapi/cmi5/context/extensions/sessionid"
         },
@@ -387,8 +391,8 @@ var Cmi5;
             this._initialized = true;
             this._inProgress = true;
 
-            st = this._prepareStatement(VERB_INITIALIZED_ID);
-            return this._sendStatement(st, callback);
+            st = this._prepareStatement(VERB_INITIALIZED_ID, true);
+            return this.sendStatement(st, callback);
         },
 
         /**
@@ -426,8 +430,8 @@ var Cmi5;
             this._terminated = true;
             this._inProgress = false;
 
-            st = this._prepareStatement(VERB_TERMINATED_ID);
-            return this._sendStatement(st, callback);
+            st = this._prepareStatement(VERB_TERMINATED_ID, true);
+            return this.sendStatement(st, callback);
         },
 
         /**
@@ -476,8 +480,8 @@ var Cmi5;
 
             this._completed = true;
 
-            st = this._prepareStatement(VERB_COMPLETED_ID);
-            return this._sendStatement(st, callback);
+            st = this._prepareStatement(VERB_COMPLETED_ID, true);
+            return this.sendStatement(st, callback);
         },
 
         /**
@@ -526,8 +530,8 @@ var Cmi5;
 
             this._passed += true;
 
-            st = this._prepareStatement(VERB_PASSED_ID);
-            return this._sendStatement(st, callback);
+            st = this._prepareStatement(VERB_PASSED_ID, true);
+            return this.sendStatement(st, callback);
         },
 
         /**
@@ -576,8 +580,8 @@ var Cmi5;
 
             this._failed += true;
 
-            st = this._prepareStatement(VERB_FAILED_ID);
-            return this._sendStatement(st, callback);
+            st = this._prepareStatement(VERB_FAILED_ID, true);
+            return this.sendStatement(st, callback);
         },
 
         /**
@@ -950,24 +954,16 @@ var Cmi5;
             return this._registration;
         },
 
-        _prepareContext: function () {
+        /**
+            @method prepareStatement
+        */
+        prepareStatement: function (verbId) {
             //
-            // deserializing a string version of the template is slower
-            // but gives us cheap cloning capability so that we don't
-            // alter the template itself
+            // the specification allows for statements that are 'cmi5 allowed'
+            // as oppposed to 'cmi5 defined' to be sent by the AU, so give the
+            // AU the ability to get a prepared statement with a populated context
+            // based on the template but without the category having been added
             //
-            var context = JSON.parse(this._contextTemplate);
-
-            context.registration = this._registration;
-            context.contextActivities = context.contextActivities || {};
-            context.contextActivities.category = context.contextActivities.category || [];
-
-            context.contextActivities.category.push(CATEGORY_ACTIVITY_CMI5);
-
-            return context;
-        },
-
-        _prepareStatement: function (verbId) {
             var stCfg = {
                 actor: this._actor,
                 verb: {
@@ -980,7 +976,10 @@ var Cmi5;
             return new TinCan.Statement(stCfg);
         },
 
-        _sendStatement: function (st, callback) {
+        /**
+            @method sendStatement
+        */
+        sendStatement: function (st, callback) {
             var st,
                 cbWrapper,
                 result;
@@ -988,7 +987,7 @@ var Cmi5;
             if (callback) {
                 cbWrapper = function (err, result) {
                     if (err !== null) {
-                        callback(err, result);
+                        callback(new Error(err), result);
                         return;
                     }
 
@@ -1008,6 +1007,33 @@ var Cmi5;
                     statement: st
                 };
             }
+        },
+
+        _prepareContext: function () {
+            //
+            // deserializing a string version of the template is slower
+            // but gives us cheap cloning capability so that we don't
+            // alter the template itself
+            //
+            var context = JSON.parse(this._contextTemplate);
+
+            context.registration = this._registration;
+
+            return context;
+        },
+
+        _prepareStatement: function (verbId) {
+            //
+            // statements sent by this lib are "cmi5 defined" statements meaning
+            // they have the context category value added
+            //
+            var st = this.prepareStatement(verbId);
+
+            st.context.contextActivities = st.context.contextActivities || new TinCan.ContextActivities();
+            st.context.contextActivities.category = st.context.contextActivities.category || [];
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_CMI5);
+
+            return st;
         }
     };
 
