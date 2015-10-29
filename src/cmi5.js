@@ -1,7 +1,6 @@
 var Cmi5;
 
 (function () {
-    /* globals window, XMLHttpRequest, XDomainRequest */
     "use strict";
     var nativeRequest,
         xdrRequest,
@@ -16,11 +15,6 @@ var Cmi5;
                 id: "http://purl.org/xapi/cmi5/context/categories/cmi5"
             }
         ),
-        CATEGORY_ACTIVITY_MOVEON = new TinCan.Activity(
-            {
-                id: "http://purl.org/xapi/cmi5/context/categories/moveon"
-            }
-        ),
         EXTENSION_SESSION_ID = {
             id: "http://purl.org/xapi/cmi5/context/extensions/sessionid"
         },
@@ -29,7 +23,6 @@ var Cmi5;
         VERB_COMPLETED_ID = "http://adlnet.gov/expapi/verbs/completed",
         VERB_PASSED_ID = "http://adlnet.gov/expapi/verbs/passed",
         VERB_FAILED_ID = "http://adlnet.gov/expapi/verbs/failed",
-        VERB_ANSWERED_ID = "http://adlnet.gov/expapi/verbs/answered",
         launchParameters = [
             "endpoint",
             "fetch",
@@ -125,8 +118,7 @@ var Cmi5;
 
             self.postFetch(
                 function (err) {
-                    var prefix = "Failed to start AU - ",
-                        result;
+                    var prefix = "Failed to start AU - ";
 
                     if (typeof events.postFetch !== "undefined") {
                         events.postFetch.apply(this, arguments);
@@ -192,6 +184,7 @@ var Cmi5;
 
             if (callback) {
                 cbWrapper = function (err, xhr) {
+                    /* jshint maxdepth: 5 */
                     self.log("postFetch::cbWrapper");
                     self.log("postFetch::cbWrapper", err);
                     self.log("postFetch::cbWrapper", xhr);
@@ -849,23 +842,13 @@ var Cmi5;
                         this._fetchRequest = xdrRequest;
                     }
                     else if (env.useXDR && ! schemeMatches) {
-                        if (cfg.allowFail) {
-                            this.log("[warning] URL invalid: cross domain request for differing scheme in IE with XDR (allowed to fail)");
-                        }
-                        else {
-                            this.log("[error] URL invalid: cross domain request for differing scheme in IE with XDR");
-                            throw new Error("URL invalid: cross domain request for differing scheme in IE with XDR");
-                        }
+                        this.log("[error] URL invalid: cross domain request for differing scheme in IE with XDR");
+                        throw new Error("URL invalid: cross domain request for differing scheme in IE with XDR");
                     }
                 }
                 else {
-                    if (cfg.allowFail) {
-                        this.log("[warning] URL invalid: cross domain requests not supported in this browser (allowed to fail)");
-                    }
-                    else {
-                        this.log("[error] URL invalid: cross domain requests not supported in this browser");
-                        throw new Error("URL invalid: cross domain requests not supported in this browser");
-                    }
+                    this.log("[error] URL invalid: cross domain requests not supported in this browser");
+                    throw new Error("URL invalid: cross domain requests not supported in this browser");
                 }
             }
         },
@@ -980,8 +963,7 @@ var Cmi5;
             @method sendStatement
         */
         sendStatement: function (st, callback) {
-            var st,
-                cbWrapper,
+            var cbWrapper,
                 result;
 
             if (callback) {
@@ -1143,8 +1125,7 @@ var Cmi5;
                 fakeStatus: null
             },
             async,
-            fullRequest = fullUrl,
-            err;
+            fullRequest = fullUrl;
 
         this.log("sendRequest using XMLHttpRequest - async: " + async);
 
@@ -1220,8 +1201,10 @@ var Cmi5;
             err;
 
         cfg = cfg || {};
+        cfg.params = cfg.params || {};
+        cfg.headers = cfg.headers || {};
 
-        if (typeof headers["Content-Type"] !== "undefined" && headers["Content-Type"] !== "application/json") {
+        if (typeof cfg.headers["Content-Type"] !== "undefined" && cfg.headers["Content-Type"] !== "application/json") {
             err = new Error("Unsupported content type for IE Mode request");
             if (callback) {
                 callback(err, null);
@@ -1240,9 +1223,8 @@ var Cmi5;
         }
 
         if (pairs.length > 0) {
-            fullRequest += "?" + pairs.join("&");
+            fullUrl += "?" + pairs.join("&");
         }
-        fullUrl = fullRequest;
 
         xhr = new XDomainRequest();
         xhr.open("POST", fullUrl);

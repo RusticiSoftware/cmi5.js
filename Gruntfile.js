@@ -41,14 +41,14 @@ module.exports = function (grunt) {
                 },
                 dist: [
                     "Gruntfile.js",
-                    "src/js/**/*.js"
+                    "src/*.js"
                 ]
             },
 
             jscs: {
                 dist: [
                     "Gruntfile.js",
-                    "src/**/*.js"
+                    "src/*.js"
                 ],
                 options: {
                     config: true

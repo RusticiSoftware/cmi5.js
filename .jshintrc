@@ -25,14 +25,12 @@
     "nonew": true,
     "nomen": false,
     "plusplus": true,
+    "laxbreak": true,
     "strict": true,
     "debug": false,
-    "node": true,
     "globals": {
-        "define": true,
-        "AppConfig": false,
-        "tv4": false,
-        "myjson": false,
-        "TinCan": false
+        "module": false,
+        "TinCan": false,
+        "URI": false
     }
 }
