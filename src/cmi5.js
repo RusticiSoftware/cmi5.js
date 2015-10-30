@@ -98,6 +98,7 @@ var Cmi5;
         _initialized: null,
         _completed: null,
         _terminated: null,
+        _durationStart: null,
 
         //
         // _passed and _failed are zero instead of null so that we
@@ -383,6 +384,7 @@ var Cmi5;
 
             this._initialized = true;
             this._inProgress = true;
+            this._durationStart = new Date().getTime();
 
             st = this._prepareStatement(VERB_INITIALIZED_ID, true);
             return this.sendStatement(st, callback);
@@ -424,6 +426,9 @@ var Cmi5;
             this._inProgress = false;
 
             st = this._prepareStatement(VERB_TERMINATED_ID, true);
+            st.result = st.result || new TinCan.Result();
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
             return this.sendStatement(st, callback);
         },
 
@@ -474,6 +479,10 @@ var Cmi5;
             this._completed = true;
 
             st = this._prepareStatement(VERB_COMPLETED_ID, true);
+            st.result = st.result || new TinCan.Result();
+            st.result.completion = true;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
             return this.sendStatement(st, callback);
         },
 
@@ -524,6 +533,10 @@ var Cmi5;
             this._passed += true;
 
             st = this._prepareStatement(VERB_PASSED_ID, true);
+            st.result = st.result || new TinCan.Result();
+            st.result.success = true;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
             return this.sendStatement(st, callback);
         },
 
@@ -574,6 +587,10 @@ var Cmi5;
             this._failed += true;
 
             st = this._prepareStatement(VERB_FAILED_ID, true);
+            st.result = st.result || new TinCan.Result();
+            st.result.success = false;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
             return this.sendStatement(st, callback);
         },
 
@@ -776,6 +793,15 @@ var Cmi5;
             }
 
             return result;
+        },
+
+        /**
+            @method getDuration
+        */
+        getDuration: function () {
+            this.log("getDuration");
+
+            return (new Date().getTime() - this._durationStart);
         },
 
         /**
