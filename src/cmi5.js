@@ -386,7 +386,7 @@ var Cmi5;
             this._inProgress = true;
             this._durationStart = new Date().getTime();
 
-            st = this._prepareStatement(VERB_INITIALIZED_ID, true);
+            st = this.initializedStatement();
             return this.sendStatement(st, callback);
         },
 
@@ -425,10 +425,7 @@ var Cmi5;
             this._terminated = true;
             this._inProgress = false;
 
-            st = this._prepareStatement(VERB_TERMINATED_ID, true);
-            st.result = st.result || new TinCan.Result();
-            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
-
+            st = this.terminatedStatement();
             return this.sendStatement(st, callback);
         },
 
@@ -478,11 +475,7 @@ var Cmi5;
 
             this._completed = true;
 
-            st = this._prepareStatement(VERB_COMPLETED_ID, true);
-            st.result = st.result || new TinCan.Result();
-            st.result.completion = true;
-            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
-
+            st = this.completedStatement();
             return this.sendStatement(st, callback);
         },
 
@@ -530,13 +523,10 @@ var Cmi5;
                 throw err;
             }
 
+
             this._passed += true;
 
-            st = this._prepareStatement(VERB_PASSED_ID, true);
-            st.result = st.result || new TinCan.Result();
-            st.result.success = true;
-            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
-
+            st = this.passedStatement();
             return this.sendStatement(st, callback);
         },
 
@@ -584,13 +574,10 @@ var Cmi5;
                 throw err;
             }
 
+
             this._failed += true;
 
-            st = this._prepareStatement(VERB_FAILED_ID, true);
-            st.result = st.result || new TinCan.Result();
-            st.result.success = false;
-            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
-
+            st = this.failedStatement();
             return this.sendStatement(st, callback);
         },
 
@@ -1015,6 +1002,78 @@ var Cmi5;
                     statement: st
                 };
             }
+        },
+
+        /*
+         * The ...Statement methods are provided for users that want to implement
+         * a queueing like mechansim or something similar where they are expected
+         * to abide by the AU restrictions on what statements can be sent, etc. on
+         * their own.
+         *
+         * (Such as in SCORM Driver which was the impetus for adding them.)
+        */
+
+        /**
+            @method initializedStatement
+        */
+        initializedStatement: function () {
+            this.log("initializedStatement");
+            return this._prepareStatement(VERB_INITIALIZED_ID);
+        },
+
+        /**
+            @method terminatedStatement
+        */
+        terminatedStatement: function () {
+            this.log("terminatedStatement");
+            var st = this._prepareStatement(VERB_TERMINATED_ID);
+
+            st.result = st.result || new TinCan.Result();
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            return st;
+        },
+
+        /**
+            @method passedStatement
+        */
+        passedStatement: function () {
+            this.log("passedStatement");
+            var st = this._prepareStatement(VERB_PASSED_ID);
+
+            st.result = st.result || new TinCan.Result();
+            st.result.success = true;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            return st;
+        },
+
+        /**
+            @method failedStatement
+        */
+        failedStatement: function () {
+            this.log("failedStatement");
+            var st = this._prepareStatement(VERB_FAILED_ID);
+
+            st.result = st.result || new TinCan.Result();
+            st.result.success = false;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            return st;
+        },
+
+        /**
+            @method completedStatement
+        */
+        completedStatement: function () {
+            this.log("completedStatement");
+            var st = this._prepareStatement(VERB_COMPLETED_ID);
+
+            st.result = st.result || new TinCan.Result();
+            st.result.completion = true;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            return st;
         },
 
         _prepareContext: function () {
