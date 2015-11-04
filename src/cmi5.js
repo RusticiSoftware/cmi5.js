@@ -336,20 +336,89 @@ var Cmi5;
                         // just means it hasn't been set to anything
                         //
                         if (result !== null) {
-                            self._learnerPrefs = result.contents;
+                            self._learnerPrefs = result;
                         }
                         else {
                             //
                             // store an empty object locally to be able to distinguish a non-set
                             // preference document vs a non-fetched preference document
                             //
-                            self._learnerPrefs = {};
+                            self._learnerPrefs = new TinCan.AgentProfile(
+                                {
+                                    id: AGENT_PROFILE_LEARNER_PREFS,
+                                    contentType: "application/json",
+                                    contents: {}
+                                }
+                            );
                         }
 
                         callback(null, result);
                     }
                 }
             );
+        },
+
+        /**
+            @method saveLearnerPrefs
+        */
+        saveLearnerPrefs: function (callback) {
+            this.log("saveLearnerPrefs");
+            var self = this,
+                result,
+                cbWrapper;
+
+            if (this._learnerPrefs === null) {
+                result = new Error("Can't save Learner Preferences without first loading them");
+                if (callback) {
+                    callback(result);
+                    return;
+                }
+                return result;
+            }
+
+            if (callback) {
+                cbWrapper = function (err, result) {
+                    self.log("saveLearnerPrefs - saveAgentProfile callback", err, result);
+                    if (err !== null) {
+                        callback(new Error("Failed to save " + AGENT_PROFILE_LEARNER_PREFS + " Agent Profile: " + err), result);
+                        return;
+                    }
+
+                    self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
+                        (typeof val === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                            ? JSON.stringify(self._learnerPrefs.contents)
+                            : self._learnerPrefs.contents
+                    );
+
+                    callback(null, result);
+                };
+            }
+
+            result = this._lrs.saveAgentProfile(
+                AGENT_PROFILE_LEARNER_PREFS,
+                this._learnerPrefs.contents,
+                {
+                    agent: this._actor,
+                    lastSHA1: this._learnerPrefs.etag,
+                    contentType: this._learnerPrefs.contentType,
+                    callback: cbWrapper
+                }
+            );
+            if (cbWrapper) {
+                return;
+            }
+
+            if (result.err !== null) {
+                return new Error("Failed to save " + AGENT_PROFILE_LEARNER_PREFS + " Agent Profile: " + result.err);
+            }
+
+            self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
+                (typeof val === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                    ? JSON.stringify(self._learnerPrefs.contents)
+                    : self._learnerPrefs.contents
+            );
+
+            return;
         },
 
         /**
@@ -757,11 +826,30 @@ var Cmi5;
                 throw new Error("Can't determine language preference until learner preferences have been loaded");
             }
 
-            if (typeof this._learnerPrefs.languagePreference !== "undefined") {
-                result = this._learnerPrefs.languagePreference;
+            if (typeof this._learnerPrefs.contents.languagePreference !== "undefined") {
+                result = this._learnerPrefs.contents.languagePreference;
             }
 
             return result;
+        },
+
+        /**
+            @method setLanguagePreference
+        */
+        setLanguagePreference: function (pref) {
+            this.log("setLanguagePreference");
+
+            if (this._learnerPrefs === null) {
+                throw new Error("Can't set language preference until learner preferences have been loaded");
+            }
+
+            if (pref === "") {
+                pref = null;
+            }
+
+            this._learnerPrefs.contents.languagePreference = pref;
+
+            return;
         },
 
         /**
@@ -775,11 +863,30 @@ var Cmi5;
                 throw new Error("Can't determine audio preference until learner preferences have been loaded");
             }
 
-            if (typeof this._learnerPrefs.audioPreference !== "undefined") {
-                result = this._learnerPrefs.audioPreference;
+            if (typeof this._learnerPrefs.contents.audioPreference !== "undefined") {
+                result = this._learnerPrefs.contents.audioPreference;
             }
 
             return result;
+        },
+
+        /**
+            @method setAudioPreference
+        */
+        setAudioPreference: function (pref) {
+            this.log("setAudioPreference");
+
+            if (this._learnerPrefs === null) {
+                throw new Error("Can't set audio preference until learner preferences have been loaded");
+            }
+
+            if (pref !== true && pref !== false && pref !== null) {
+                throw new Error("Unrecognized value for audio preference: " + pref);
+            }
+
+            this._learnerPrefs.contents.audioPreference = pref;
+
+            return;
         },
 
         /**
