@@ -23,6 +23,7 @@ var Cmi5;
         VERB_COMPLETED_ID = "http://adlnet.gov/expapi/verbs/completed",
         VERB_PASSED_ID = "http://adlnet.gov/expapi/verbs/passed",
         VERB_FAILED_ID = "http://adlnet.gov/expapi/verbs/failed",
+        verbDisplay = {},
         launchParameters = [
             "endpoint",
             "fetch",
@@ -30,6 +31,13 @@ var Cmi5;
             "activityId",
             "registration"
         ];
+
+    verbDisplay[VERB_INITIALIZED_ID] = {
+        "en": "initialized"
+    };
+    verbDisplay[VERB_TERMINATED_ID] = {
+        "en": "terminated"
+    };
 
     //
     // Detect CORS and XDR support
@@ -1075,6 +1083,10 @@ var Cmi5;
                 target: this._activity,
                 context: this._prepareContext()
             };
+
+            if (typeof verbDisplay[verbId] !== "undefined") {
+                stCfg.verb.display = verbDisplay[verbId];
+            }
 
             return new TinCan.Statement(stCfg);
         },
