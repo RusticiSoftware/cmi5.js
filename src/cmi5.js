@@ -104,17 +104,11 @@ var Cmi5;
         _learnerPrefs: null,
         _inProgress: false,
         _initialized: null,
+        _passed: null,
+        _failed: null,
         _completed: null,
         _terminated: null,
         _durationStart: null,
-
-        //
-        // _passed and _failed are zero instead of null so that we
-        // can keep track of the number of times each has been set
-        // mostly to check against passIsFinal
-        //
-        _passed: 0,
-        _failed: 0,
 
         /**
             @method start
@@ -588,9 +582,9 @@ var Cmi5;
                 throw err;
             }
 
-            if ((this._failed !== 0 || this._passed !== 0) && this.getPassIsFinal()) {
-                this.log("passed - already passed/failed and passIsFinal");
-                err = new Error("AU already passed/failed and passIsFinal");
+            if (this._failed !== null || this._passed !== null) {
+                this.log("passed - already passed/failed");
+                err = new Error("AU already passed/failed");
 
                 if (callback) {
                     callback(err);
@@ -601,7 +595,7 @@ var Cmi5;
             }
 
 
-            this._passed += true;
+            this._passed = true;
 
             st = this.passedStatement();
             return this.sendStatement(st, callback);
@@ -639,9 +633,9 @@ var Cmi5;
                 throw err;
             }
 
-            if ((this._failed !== 0 || this._passed !== 0) && this.getPassIsFinal()) {
-                this.log("failed - already passed/failed and passIsFinal");
-                err = new Error("AU already passed/failed and passIsFinal");
+            if (this._failed !== null || this._passed !== null) {
+                this.log("failed - already passed/failed");
+                err = new Error("AU already passed/failed");
 
                 if (callback) {
                     callback(err);
@@ -652,7 +646,7 @@ var Cmi5;
             }
 
 
-            this._failed += true;
+            this._failed = true;
 
             st = this.failedStatement();
             return this.sendStatement(st, callback);
@@ -732,24 +726,6 @@ var Cmi5;
             }
 
             return this._lmsLaunchData.contextTemplate.extensions[EXTENSION_SESSION_ID.id];
-        },
-
-        /**
-            @method getPassIsFinal
-        */
-        getPassIsFinal: function () {
-            this.log("getPassIsFinal");
-            var result = true;
-
-            if (this._lmsLaunchData === null) {
-                throw new Error("Can't determine passIsFinal until LMS LaunchData has been loaded");
-            }
-
-            if (typeof this._lmsLaunchData.passIsFinal !== "undefined") {
-                result = this._lmsLaunchData.passIsFinal;
-            }
-
-            return result;
         },
 
         /**
