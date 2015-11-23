@@ -1205,10 +1205,12 @@ var Cmi5;
         @method enableDebug
         @static
     */
-    Cmi5.enableDebug = function () {
+    Cmi5.enableDebug = function (includeTinCan) {
         Cmi5.DEBUG = true;
 
-        TinCan.enableDebug();
+        if (includeTinCan) {
+            TinCan.enableDebug();
+        }
     };
 
     /**
@@ -1217,10 +1219,12 @@ var Cmi5;
         @method disableDebug
         @static
     */
-    Cmi5.disableDebug = function () {
+    Cmi5.disableDebug = function (includeTinCan) {
         Cmi5.DEBUG = false;
 
-        TinCan.disableDebug();
+        if (includeTinCan) {
+            TinCan.disableDebug();
+        }
     };
 
     //
