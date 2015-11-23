@@ -922,7 +922,7 @@ var Cmi5;
                 throw new Error("Can't set audio preference until learner preferences have been loaded");
             }
 
-            if (pref !== true && pref !== false && pref !== null) {
+            if (pref !== "on" && pref !== "off" && pref !== null) {
                 throw new Error("Unrecognized value for audio preference: " + pref);
             }
 
