@@ -15,6 +15,11 @@ var Cmi5;
                 id: "http://purl.org/xapi/cmi5/context/categories/cmi5"
             }
         ),
+        CATEGORY_ACTIVITY_MOVEON = new TinCan.Activity(
+            {
+                id: "http://purl.org/xapi/cmi5/context/categories/moveon"
+            }
+        ),
         EXTENSION_SESSION_ID = {
             id: "http://purl.org/xapi/cmi5/context/extensions/sessionid"
         },
@@ -1217,6 +1222,8 @@ var Cmi5;
                 st.result.score = new TinCan.Score(score);
             }
 
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_MOVEON);
+
             return st;
         },
 
@@ -1250,6 +1257,8 @@ var Cmi5;
                 st.result.score = new TinCan.Score(score);
             }
 
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_MOVEON);
+
             return st;
         },
 
@@ -1263,6 +1272,8 @@ var Cmi5;
             st.result = st.result || new TinCan.Result();
             st.result.completion = true;
             st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_MOVEON);
 
             return st;
         },
