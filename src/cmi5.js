@@ -553,10 +553,12 @@ var Cmi5;
         /**
             @method passed
         */
-        passed: function (callback) {
+        passed: function (score, callback) {
             this.log("passed");
             var st,
-                err;
+                err,
+                callbackWrapper,
+                result;
 
             if (! this.inProgress()) {
                 this.log("passed - not active");
@@ -594,20 +596,49 @@ var Cmi5;
                 throw err;
             }
 
+            try {
+                st = this.passedStatement(score);
+            }
+            catch (ex) {
+                this.log("passed - failed to create passed statement: " + ex);
+                if (callback) {
+                    callback("Failed to create passed statement - " + ex);
+                    return;
+                }
 
-            this._passed = true;
+                throw ex;
+            }
 
-            st = this.passedStatement();
-            return this.sendStatement(st, callback);
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log("passed - callbackWrapper: " + err);
+                    if (err === null) {
+                        this._passed = true;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log("passed - result: ", result);
+
+            if (! callback && result.response.err === null) {
+                this._passed = true;
+            }
+
+            return result;
         },
 
         /**
             @method failed
         */
-        failed: function (callback) {
+        failed: function (score, callback) {
             this.log("failed");
             var st,
-                err;
+                err,
+                callbackWrapper,
+                result;
 
             if (! this.inProgress()) {
                 this.log("failed - not active");
@@ -645,11 +676,38 @@ var Cmi5;
                 throw err;
             }
 
+            try {
+                st = this.failedStatement(score);
+            }
+            catch (ex) {
+                this.log("failed - failed to create failed statement: " + ex);
+                if (callback) {
+                    callback("Failed to create failed statement - " + ex);
+                    return;
+                }
 
-            this._failed = true;
+                throw ex;
+            }
 
-            st = this.failedStatement();
-            return this.sendStatement(st, callback);
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log("failed - callbackWrapper: " + err);
+                    if (err === null) {
+                        this._failed = true;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log("failed - result: ", result);
+
+            if (! callback && result.response.err === null) {
+                this._failed = true;
+            }
+
+            return result;
         },
 
         /**
@@ -1132,13 +1190,32 @@ var Cmi5;
         /**
             @method passedStatement
         */
-        passedStatement: function () {
+        passedStatement: function (score) {
             this.log("passedStatement");
-            var st = this._prepareStatement(VERB_PASSED_ID);
+            var st = this._prepareStatement(VERB_PASSED_ID),
+                masteryScore;
 
             st.result = st.result || new TinCan.Result();
             st.result.success = true;
             st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            if (score) {
+                try {
+                    this._validateScore(score);
+                }
+                catch (ex) {
+                    throw new Error("Invalid score - " + ex);
+                }
+
+                masteryScore = this.getMasteryScore();
+                if (masteryScore !== null && typeof score.scaled !== "undefined") {
+                    if (score.scaled < masteryScore) {
+                        throw new Error("Invalid score - scaled score does not meet or exceed mastery score (" + score.scaled + " < " + masteryScore + ")");
+                    }
+                }
+
+                st.result.score = new TinCan.Score(score);
+            }
 
             return st;
         },
@@ -1146,13 +1223,32 @@ var Cmi5;
         /**
             @method failedStatement
         */
-        failedStatement: function () {
+        failedStatement: function (score) {
             this.log("failedStatement");
-            var st = this._prepareStatement(VERB_FAILED_ID);
+            var st = this._prepareStatement(VERB_FAILED_ID),
+                masteryScore;
 
             st.result = st.result || new TinCan.Result();
             st.result.success = false;
             st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            if (score) {
+                try {
+                    this._validateScore(score);
+                }
+                catch (ex) {
+                    throw new Error("Invalid score - " + ex);
+                }
+
+                masteryScore = this.getMasteryScore();
+                if (masteryScore !== null && typeof score.scaled !== "undefined") {
+                    if (score.scaled >= masteryScore) {
+                        throw new Error("Invalid score - scaled score exceeds mastery score (" + score.scaled + " >= " + masteryScore + ")");
+                    }
+                }
+
+                st.result.score = new TinCan.Score(score);
+            }
 
             return st;
         },
@@ -1196,6 +1292,61 @@ var Cmi5;
             st.context.contextActivities.category.push(CATEGORY_ACTIVITY_CMI5);
 
             return st;
+        },
+
+        _validateScore: function (score) {
+            // polyfill for Number.isInteger from MDN
+            var isInteger = function (value) {
+                return typeof value === "number" && isFinite(value) && Math.floor(value) === value;
+            };
+
+            if (typeof score === "undefined" || score === null) {
+                throw new Error("cannot validate score (score not provided): " + score);
+            }
+
+            if (typeof score.min !== "undefined") {
+                if (! isInteger(score.min)) {
+                    throw new Error("score.min is not an integer");
+                }
+            }
+            if (typeof score.max !== "undefined") {
+                if (! isInteger(score.max)) {
+                    throw new Error("score.max is not an integer");
+                }
+            }
+
+            if (typeof score.scaled !== "undefined") {
+                if (! /^(\-|\+)?[01]+(\.[0-9]+)?$/.test(score.scaled)) {
+                    throw new Error("scaled score not a recognized number: " + score.scaled);
+                }
+
+                if (score.scaled < 0) {
+                    throw new Error("scaled score must be greater than or equal to 0");
+                }
+                if (score.scaled > 1) {
+                    throw new Error("scaled score must be less than or equal to 1");
+                }
+            }
+
+            if (typeof score.raw !== "undefined") {
+                if (! isInteger(score.raw)) {
+                    throw new Error("score.raw is not an integer");
+                }
+                if (typeof score.min === "undefined") {
+                    throw new Error("minimum score must be provided when including a raw score");
+                }
+                if (typeof score.max === "undefined") {
+                    throw new Error("maximum score must be provided when including a raw score");
+                }
+                if (score.raw < score.min) {
+                    throw new Error("raw score must be greater than or equal to minimum score");
+                }
+                if (score.raw > score.max) {
+                    throw new Error("raw score must be less than or equal to maximum score");
+                }
+            }
+
+            return true;
         }
     };
 
