@@ -107,7 +107,7 @@ var Cmi5;
         _lmsLaunchData: null,
         _contextTemplate: null,
         _learnerPrefs: null,
-        _inProgress: false,
+        _isActive: false,
         _initialized: null,
         _passed: null,
         _failed: null,
@@ -459,7 +459,7 @@ var Cmi5;
             }
 
             this._initialized = true;
-            this._inProgress = true;
+            this._isActive = true;
             this._durationStart = new Date().getTime();
 
             st = this.initializedStatement();
@@ -499,7 +499,7 @@ var Cmi5;
             }
 
             this._terminated = true;
-            this._inProgress = false;
+            this._isActive = false;
 
             st = this.terminatedStatement();
             return this.sendStatement(st, callback);
@@ -513,7 +513,7 @@ var Cmi5;
             var st,
                 err;
 
-            if (! this.inProgress()) {
+            if (! this.isActive()) {
                 this.log("completed - not active");
                 err = new Error("AU not active");
 
@@ -565,7 +565,7 @@ var Cmi5;
                 callbackWrapper,
                 result;
 
-            if (! this.inProgress()) {
+            if (! this.isActive()) {
                 this.log("passed - not active");
                 err = new Error("AU not active");
 
@@ -645,7 +645,7 @@ var Cmi5;
                 callbackWrapper,
                 result;
 
-            if (! this.inProgress()) {
+            if (! this.isActive()) {
                 this.log("failed - not active");
                 err = new Error("AU not active");
 
@@ -716,11 +716,11 @@ var Cmi5;
         },
 
         /**
-            @method inProgress
+            @method isActive
         */
-        inProgress: function () {
-            this.log("inProgress");
-            return this._inProgress;
+        isActive: function () {
+            this.log("isActive");
+            return this._isActive;
         },
 
         /**
