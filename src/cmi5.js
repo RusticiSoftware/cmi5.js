@@ -35,7 +35,13 @@ var Cmi5;
             "actor",
             "activityId",
             "registration"
-        ];
+        ],
+        isInteger;
+
+    // polyfill for Number.isInteger from MDN
+    isInteger = function (value) {
+        return typeof value === "number" && isFinite(value) && Math.floor(value) === value;
+    };
 
     verbDisplay[VERB_INITIALIZED_ID] = {
         "en": "initialized"
@@ -114,6 +120,7 @@ var Cmi5;
         _completed: null,
         _terminated: null,
         _durationStart: null,
+        _progress: null,
 
         /**
             @method start
@@ -946,6 +953,31 @@ var Cmi5;
         },
 
         /**
+            @method setProgress
+        */
+        setProgress: function (progress) {
+            this.log("setProgress: ", progress);
+
+            if (progress !== null) {
+                if (! isInteger(progress)) {
+                    throw new Error("Invalid progress measure (not an integer): " + progress);
+                }
+                if (progress < 0 || progress > 100) {
+                    throw new Error("Invalid progress measure must be greater than or equal to 0 and less than or equal to 100: " + progress);
+                }
+            }
+            this._progress = progress;
+        },
+
+        /**
+            @method getProgress
+        */
+        getProgress: function () {
+            this.log("getProgress");
+            return this._progress;
+        },
+
+        /**
             @method setFetch
         */
         setFetch: function (fetchURL) {
@@ -1115,16 +1147,25 @@ var Cmi5;
             // based on the template but without the category having been added
             //
             var stCfg = {
-                actor: this._actor,
-                verb: {
-                    id: verbId
+                    actor: this._actor,
+                    verb: {
+                        id: verbId
+                    },
+                    target: this._activity,
+                    context: this._prepareContext()
                 },
-                target: this._activity,
-                context: this._prepareContext()
-            };
+                progress = this.getProgress();
 
             if (typeof verbDisplay[verbId] !== "undefined") {
                 stCfg.verb.display = verbDisplay[verbId];
+            }
+
+            if (progress !== null) {
+                stCfg.result = {
+                    extensions: {
+                        "http://purl.org/xapi/cmi5/result/extensions/progress": progress
+                    }
+                };
             }
 
             return new TinCan.Statement(stCfg);
@@ -1306,11 +1347,6 @@ var Cmi5;
         },
 
         _validateScore: function (score) {
-            // polyfill for Number.isInteger from MDN
-            var isInteger = function (value) {
-                return typeof value === "number" && isFinite(value) && Math.floor(value) === value;
-            };
-
             if (typeof score === "undefined" || score === null) {
                 throw new Error("cannot validate score (score not provided): " + score);
             }
