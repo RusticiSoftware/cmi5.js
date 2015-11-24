@@ -1,7 +1,7 @@
 {
   "name": "cmi5.js",
   "version": "0.0.1",
-  "description": "cmi5 runtime library",
+  "description": "A JavaScript library implementing the cmi5 specification for AUs during runtime.",
   "private": true,
   "keywords": [
     "cmi5",
@@ -24,6 +24,6 @@
     "grunt-jscs": "2.1.0"
   },
   "dependencies": {
-    "tincanjs": "0.34.1"
+    "tincanjs": "0.40.0"
   }
 }

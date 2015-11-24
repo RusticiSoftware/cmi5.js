@@ -57,7 +57,12 @@ module.exports = function (grunt) {
 
             concat: {
                 options: {
-                    banner: banner
+                    banner: banner,
+
+                    // processing causes replacement of Grunt templating items
+                    // in the source files, this is being used to set the package
+                    // version into the cmi5.js source file
+                    process: true
                 },
                 dist: {
                     files: {
@@ -67,7 +72,8 @@ module.exports = function (grunt) {
                             "node_modules/tincanjs/build/tincan.js",
                             "src/cmi5.js"
                         ]
-                    }
+                    },
+                    nonull: true
                 }
             },
 

@@ -2,7 +2,13 @@ var Cmi5;
 
 (function () {
     "use strict";
-    var nativeRequest,
+    var THIS_LIBRARY = {
+            // set by the build step
+            VERSION: "<%= pkg.version %>",
+            NAME: "<%= pkg.name %>",
+            DESCRIPTION: "<%= pkg.description %>"
+        },
+        nativeRequest,
         xdrRequest,
         requestComplete,
         __delay,
@@ -18,6 +24,20 @@ var Cmi5;
         CATEGORY_ACTIVITY_MOVEON = new TinCan.Activity(
             {
                 id: "http://purl.org/xapi/cmi5/context/categories/moveon"
+            }
+        ),
+        OTHER_ACTIVITY_CMI5JS = new TinCan.Activity(
+            {
+                id: "http://id.tincanapi.com/software/" + THIS_LIBRARY.NAME + "/" + THIS_LIBRARY.VERSION,
+                definition: {
+                    name: {
+                        und: THIS_LIBRARY.NAME + " (" + THIS_LIBRARY.VERSION + ")"
+                    },
+                    description: {
+                        "en": THIS_LIBRARY.DESCRIPTION
+                    },
+                    type: "http://id.tincanapi.com/activitytype/source"
+                }
             }
         ),
         EXTENSION_SESSION_ID = {
@@ -93,6 +113,8 @@ var Cmi5;
         }
     };
 
+    Cmi5.VERSION = THIS_LIBRARY.VERSION;
+
     /**
         @property DEBUG
         @static
@@ -121,6 +143,7 @@ var Cmi5;
         _terminated: null,
         _durationStart: null,
         _progress: null,
+        _includeSourceActivity: true,
 
         /**
             @method start
@@ -745,6 +768,13 @@ var Cmi5;
         },
 
         /**
+            @method includeSourceActivity
+        */
+        includeSourceActivity: function (val) {
+            this._includeSourceActivity = val ? true : false;
+        },
+
+        /**
             @method getLaunchMethod
         */
         getLaunchMethod: function () {
@@ -1328,6 +1358,12 @@ var Cmi5;
             var context = JSON.parse(this._contextTemplate);
 
             context.registration = this._registration;
+
+            if (this._includeSourceActivity) {
+                context.contextActivities = context.contextActivities || new TinCan.ContextActivities();
+                context.contextActivities.other = context.contextActivities.other || [];
+                context.contextActivities.other.push(OTHER_ACTIVITY_CMI5JS);
+            }
 
             return context;
         },
