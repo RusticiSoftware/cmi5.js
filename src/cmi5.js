@@ -28,7 +28,7 @@ var Cmi5;
         ),
         OTHER_ACTIVITY_CMI5JS = new TinCan.Activity(
             {
-                id: "http://id.tincanapi.com/software/" + THIS_LIBRARY.NAME + "/" + THIS_LIBRARY.VERSION,
+                id: "http://id.tincanapi.com/activity/software/" + THIS_LIBRARY.NAME + "/" + THIS_LIBRARY.VERSION,
                 definition: {
                     name: {
                         und: THIS_LIBRARY.NAME + " (" + THIS_LIBRARY.VERSION + ")"
@@ -1137,12 +1137,15 @@ var Cmi5;
         /**
             @method setActivity
         */
-        setActivity: function (activityId) {
-            this._activity = new TinCan.Activity(
-                {
-                    id: activityId
-                }
-            );
+        setActivity: function (activity) {
+            if (! (activity instanceof TinCan.Activity)) {
+                activity = new TinCan.Activity(
+                    {
+                        id: activity
+                    }
+                );
+            }
+            this._activity = activity;
         },
 
         /**
