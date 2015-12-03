@@ -1170,6 +1170,59 @@ var Cmi5;
         },
 
         /**
+            @method validateScore
+        */
+        validateScore: function (score) {
+            if (typeof score === "undefined" || score === null) {
+                throw new Error("cannot validate score (score not provided): " + score);
+            }
+
+            if (typeof score.min !== "undefined") {
+                if (! isInteger(score.min)) {
+                    throw new Error("score.min is not an integer");
+                }
+            }
+            if (typeof score.max !== "undefined") {
+                if (! isInteger(score.max)) {
+                    throw new Error("score.max is not an integer");
+                }
+            }
+
+            if (typeof score.scaled !== "undefined") {
+                if (! /^(\-|\+)?[01]+(\.[0-9]+)?$/.test(score.scaled)) {
+                    throw new Error("scaled score not a recognized number: " + score.scaled);
+                }
+
+                if (score.scaled < 0) {
+                    throw new Error("scaled score must be greater than or equal to 0");
+                }
+                if (score.scaled > 1) {
+                    throw new Error("scaled score must be less than or equal to 1");
+                }
+            }
+
+            if (typeof score.raw !== "undefined") {
+                if (! isInteger(score.raw)) {
+                    throw new Error("score.raw is not an integer");
+                }
+                if (typeof score.min === "undefined") {
+                    throw new Error("minimum score must be provided when including a raw score");
+                }
+                if (typeof score.max === "undefined") {
+                    throw new Error("maximum score must be provided when including a raw score");
+                }
+                if (score.raw < score.min) {
+                    throw new Error("raw score must be greater than or equal to minimum score");
+                }
+                if (score.raw > score.max) {
+                    throw new Error("raw score must be less than or equal to maximum score");
+                }
+            }
+
+            return true;
+        },
+
+        /**
             @method prepareStatement
         */
         prepareStatement: function (verbId) {
@@ -1280,7 +1333,7 @@ var Cmi5;
 
             if (score) {
                 try {
-                    this._validateScore(score);
+                    this.validateScore(score);
                 }
                 catch (ex) {
                     throw new Error("Invalid score - " + ex);
@@ -1315,7 +1368,7 @@ var Cmi5;
 
             if (score) {
                 try {
-                    this._validateScore(score);
+                    this.validateScore(score);
                 }
                 catch (ex) {
                     throw new Error("Invalid score - " + ex);
@@ -1383,56 +1436,6 @@ var Cmi5;
             st.context.contextActivities.category.push(CATEGORY_ACTIVITY_CMI5);
 
             return st;
-        },
-
-        _validateScore: function (score) {
-            if (typeof score === "undefined" || score === null) {
-                throw new Error("cannot validate score (score not provided): " + score);
-            }
-
-            if (typeof score.min !== "undefined") {
-                if (! isInteger(score.min)) {
-                    throw new Error("score.min is not an integer");
-                }
-            }
-            if (typeof score.max !== "undefined") {
-                if (! isInteger(score.max)) {
-                    throw new Error("score.max is not an integer");
-                }
-            }
-
-            if (typeof score.scaled !== "undefined") {
-                if (! /^(\-|\+)?[01]+(\.[0-9]+)?$/.test(score.scaled)) {
-                    throw new Error("scaled score not a recognized number: " + score.scaled);
-                }
-
-                if (score.scaled < 0) {
-                    throw new Error("scaled score must be greater than or equal to 0");
-                }
-                if (score.scaled > 1) {
-                    throw new Error("scaled score must be less than or equal to 1");
-                }
-            }
-
-            if (typeof score.raw !== "undefined") {
-                if (! isInteger(score.raw)) {
-                    throw new Error("score.raw is not an integer");
-                }
-                if (typeof score.min === "undefined") {
-                    throw new Error("minimum score must be provided when including a raw score");
-                }
-                if (typeof score.max === "undefined") {
-                    throw new Error("maximum score must be provided when including a raw score");
-                }
-                if (score.raw < score.min) {
-                    throw new Error("raw score must be greater than or equal to minimum score");
-                }
-                if (score.raw > score.max) {
-                    throw new Error("raw score must be less than or equal to maximum score");
-                }
-            }
-
-            return true;
         }
     };
 
