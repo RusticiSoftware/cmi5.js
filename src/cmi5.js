@@ -1123,8 +1123,12 @@ var Cmi5;
         /**
             @method setActor
         */
-        setActor: function (actorJSON) {
-            this._actor = TinCan.Agent.fromJSON(actorJSON);
+        setActor: function (agent) {
+            if (! (agent instanceof TinCan.Agent)) {
+                agent = TinCan.Agent.fromJSON(agent);
+            }
+
+            this._actor = agent;
         },
 
         /**
