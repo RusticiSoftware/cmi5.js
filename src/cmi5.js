@@ -1128,6 +1128,28 @@ var Cmi5;
                 agent = TinCan.Agent.fromJSON(agent);
             }
 
+            //
+            // don't generally want to do too much validation as the LMS
+            // should be giving us valid information, *but* in this case
+            // users need to be able to count on the type of object being
+            // returned
+            //
+            if ((agent.account === null) || (! (agent.account instanceof TinCan.AgentAccount))) {
+                throw new Error("Invalid actor: missing or invalid account");
+            }
+            else if (agent.account.name === null) {
+                throw new Error("Invalid actor: name is null");
+            }
+            else if (agent.account.name === "") {
+                throw new Error("Invalid actor: name is empty");
+            }
+            else if (agent.account.homePage === null) {
+                throw new Error("Invalid actor: homePage is null");
+            }
+            else if (agent.account.homePage === "") {
+                throw new Error("Invalid actor: homePage is empty");
+            }
+
             this._actor = agent;
         },
 
@@ -1149,6 +1171,14 @@ var Cmi5;
                     }
                 );
             }
+
+            if (activity.id === null) {
+                throw new Error("Invalid activity: id is null");
+            }
+            else if (activity.id === "") {
+                throw new Error("Invalid activity: id is empty");
+            }
+
             this._activity = activity;
         },
 
@@ -1163,6 +1193,13 @@ var Cmi5;
             @method setRegistration
         */
         setRegistration: function (registration) {
+            if (registration === null) {
+                throw new Error("Invalid registration: null");
+            }
+            else if (registration === "") {
+                throw new Error("Invalid registration: empty");
+            }
+
             this._registration = registration;
         },
 
