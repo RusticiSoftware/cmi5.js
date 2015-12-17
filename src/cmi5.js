@@ -422,7 +422,7 @@ var Cmi5;
                     }
 
                     self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
-                        (typeof val === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                        (typeof self._learnerPrefs.contents === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
                             ? JSON.stringify(self._learnerPrefs.contents)
                             : self._learnerPrefs.contents
                     );
@@ -450,7 +450,7 @@ var Cmi5;
             }
 
             self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
-                (typeof val === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                (typeof self._learnerPrefs.contents === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
                     ? JSON.stringify(self._learnerPrefs.contents)
                     : self._learnerPrefs.contents
             );
