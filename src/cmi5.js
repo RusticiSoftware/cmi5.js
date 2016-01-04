@@ -15,7 +15,7 @@ var Cmi5;
         env = {},
         STATE_LMS_LAUNCHDATA = "LMS.LaunchData",
         LAUNCH_MODE_NORMAL = "Normal",
-        AGENT_PROFILE_LEARNER_PREFS = "CMI5LearnerPreferences",
+        AGENT_PROFILE_LEARNER_PREFS = "cmi5LearnerPreferences",
         CATEGORY_ACTIVITY_CMI5 = new TinCan.Activity(
             {
                 id: "http://purl.org/xapi/cmi5/context/categories/cmi5"
