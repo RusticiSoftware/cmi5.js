@@ -464,7 +464,9 @@ var Cmi5;
         initialize: function (callback) {
             this.log("initialize");
             var st,
-                err;
+                err,
+                callbackWrapper,
+                result;
 
             if (this._learnerPrefs === null) {
                 err = new Error("Can't send initialized statement without successful loadLearnerPrefs");
@@ -488,12 +490,31 @@ var Cmi5;
                 throw err;
             }
 
-            this._initialized = true;
-            this._isActive = true;
-            this._durationStart = new Date().getTime();
-
             st = this.initializedStatement();
-            return this.sendStatement(st, callback);
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log("initialize - callbackWrapper: " + err);
+                    if (err === null) {
+                        this._initialized = true;
+                        this._isActive = true;
+                        this._durationStart = new Date().getTime();
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log("initialize - result: ", result);
+
+            if (! callback && result.response.err === null) {
+                this._initialized = true;
+                this._isActive = true;
+                this._durationStart = new Date().getTime();
+            }
+
+            return result;
         },
 
         /**
@@ -502,7 +523,9 @@ var Cmi5;
         terminate: function (callback) {
             this.log("terminate");
             var st,
-                err;
+                err,
+                callbackWrapper,
+                result;
 
             if (! this._initialized) {
                 this.log("terminate - not initialized");
@@ -528,11 +551,29 @@ var Cmi5;
                 throw err;
             }
 
-            this._terminated = true;
-            this._isActive = false;
-
             st = this.terminatedStatement();
-            return this.sendStatement(st, callback);
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log("terminate - callbackWrapper: " + err);
+                    if (err === null) {
+                        this._terminated = true;
+                        this._isActive = false;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callback);
+            this.log("terminate - result: ", result);
+
+            if (! callback && result.response.err === null) {
+                this._terminated = true;
+                this._isActive = false;
+            }
+
+            return result;
         },
 
         /**
@@ -541,7 +582,9 @@ var Cmi5;
         completed: function (callback) {
             this.log("completed");
             var st,
-                err;
+                err,
+                callbackWrapper,
+                result;
 
             if (! this.isActive()) {
                 this.log("completed - not active");
@@ -579,10 +622,27 @@ var Cmi5;
                 throw err;
             }
 
-            this._completed = true;
-
             st = this.completedStatement();
-            return this.sendStatement(st, callback);
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log("completed - callbackWrapper: " + err);
+                    if (err === null) {
+                        this._completed = true;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callback);
+            this.log("completed - result: ", result);
+
+            if (! callback && result.response.err === null) {
+                this._completed = true;
+            }
+
+            return result;
         },
 
         /**
