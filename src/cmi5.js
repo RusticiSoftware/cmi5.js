@@ -18,12 +18,12 @@ var Cmi5;
         AGENT_PROFILE_LEARNER_PREFS = "cmi5LearnerPreferences",
         CATEGORY_ACTIVITY_CMI5 = new TinCan.Activity(
             {
-                id: "http://w3id.org/xapi/cmi5/context/categories/cmi5"
+                id: "https://w3id.org/xapi/cmi5/context/categories/cmi5"
             }
         ),
         CATEGORY_ACTIVITY_MOVEON = new TinCan.Activity(
             {
-                id: "http://w3id.org/xapi/cmi5/context/categories/moveon"
+                id: "https://w3id.org/xapi/cmi5/context/categories/moveon"
             }
         ),
         OTHER_ACTIVITY_CMI5JS = new TinCan.Activity(
@@ -41,7 +41,7 @@ var Cmi5;
             }
         ),
         EXTENSION_SESSION_ID = {
-            id: "http://w3id.org/xapi/cmi5/context/extensions/sessionid"
+            id: "https://w3id.org/xapi/cmi5/context/extensions/sessionid"
         },
         VERB_INITIALIZED_ID = "http://adlnet.gov/expapi/verbs/initialized",
         VERB_TERMINATED_ID = "http://adlnet.gov/expapi/verbs/terminated",
@@ -1350,7 +1350,7 @@ var Cmi5;
             if (progress !== null) {
                 stCfg.result = {
                     extensions: {
-                        "http://w3id.org/xapi/cmi5/result/extensions/progress": progress
+                        "https://w3id.org/xapi/cmi5/result/extensions/progress": progress
                     }
                 };
             }
