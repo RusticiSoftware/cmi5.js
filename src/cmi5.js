@@ -679,9 +679,9 @@ var Cmi5;
                 throw err;
             }
 
-            if (this._failed !== null || this._passed !== null) {
-                this.log("passed - already passed/failed");
-                err = new Error("AU already passed/failed");
+            if (this._passed !== null) {
+                this.log("passed - already passed");
+                err = new Error("AU already passed");
 
                 if (callback) {
                     callback(err);
