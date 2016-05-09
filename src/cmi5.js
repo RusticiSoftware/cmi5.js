@@ -40,9 +40,8 @@ var Cmi5;
                 }
             }
         ),
-        EXTENSION_SESSION_ID = {
-            id: "https://w3id.org/xapi/cmi5/context/extensions/sessionid"
-        },
+        EXTENSION_SESSION_ID = "https://w3id.org/xapi/cmi5/context/extensions/sessionid",
+        EXTENSION_MASTERY_SCORE = "https://w3id.org/xapi/cmi5/context/extensions/masteryscore",
         VERB_INITIALIZED_ID = "http://adlnet.gov/expapi/verbs/initialized",
         VERB_TERMINATED_ID = "http://adlnet.gov/expapi/verbs/terminated",
         VERB_COMPLETED_ID = "http://adlnet.gov/expapi/verbs/completed",
@@ -882,10 +881,10 @@ var Cmi5;
         getSessionId: function () {
             this.log("getSessionId");
             if (this._lmsLaunchData === null) {
-                throw new Error("Can't determine launchMode until LMS LaunchData has been loaded");
+                throw new Error("Can't determine session id until LMS LaunchData has been loaded");
             }
 
-            return this._lmsLaunchData.contextTemplate.extensions[EXTENSION_SESSION_ID.id];
+            return this._lmsLaunchData.contextTemplate.extensions[EXTENSION_SESSION_ID];
         },
 
         /**
@@ -1445,6 +1444,9 @@ var Cmi5;
                     if (score.scaled < masteryScore) {
                         throw new Error("Invalid score - scaled score does not meet or exceed mastery score (" + score.scaled + " < " + masteryScore + ")");
                     }
+
+                    st.context.extensions = st.context.extensions || {};
+                    st.context.extensions[EXTENSION_MASTERY_SCORE] = masteryScore;
                 }
 
                 st.result.score = new TinCan.Score(score);
@@ -1480,6 +1482,9 @@ var Cmi5;
                     if (score.scaled >= masteryScore) {
                         throw new Error("Invalid score - scaled score exceeds mastery score (" + score.scaled + " >= " + masteryScore + ")");
                     }
+
+                    st.context.extensions = st.context.extensions || {};
+                    st.context.extensions[EXTENSION_MASTERY_SCORE] = masteryScore;
                 }
 
                 st.result.score = new TinCan.Score(score);
