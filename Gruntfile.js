@@ -2,7 +2,13 @@ module.exports = function (grunt) {
     "use strict";
 
     var pkg = grunt.file.readJSON("package.json"),
-        banner = "/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today('isoDateTime') %> */\n";
+        banner = "/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today('isoDateTime') %> */\n",
+        srcFileList = [
+            "vendor/URI.js/src/punycode.js",
+            "vendor/URI.js/src/URI.js",
+            "node_modules/tincanjs/build/tincan.js",
+            "src/cmi5.js"
+        ];
 
     Object.keys(pkg.devDependencies).forEach(
         function (dep) {
@@ -35,6 +41,10 @@ module.exports = function (grunt) {
                 ]
             },
 
+            fileExists: {
+                dist: srcFileList
+            },
+
             jshint: {
                 options: {
                     jshintrc: ".jshintrc"
@@ -65,15 +75,8 @@ module.exports = function (grunt) {
                     process: true
                 },
                 dist: {
-                    files: {
-                        "build/cmi5.js": [
-                            "vendor/URI.js/src/punycode.js",
-                            "vendor/URI.js/src/URI.js",
-                            "node_modules/tincanjs/build/tincan.js",
-                            "src/cmi5.js"
-                        ]
-                    },
-                    nonull: true
+                    src: srcFileList,
+                    dest: "build/cmi5.js"
                 }
             },
 
@@ -93,6 +96,7 @@ module.exports = function (grunt) {
     grunt.registerTask(
         "build",
         [
+            "fileExists",
             "jshint",
             "jscs",
             "concat",
