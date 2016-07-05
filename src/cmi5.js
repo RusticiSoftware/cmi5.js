@@ -627,6 +627,7 @@ var Cmi5;
                 callbackWrapper = function (err) {
                     this.log("completed - callbackWrapper: " + err);
                     if (err === null) {
+                        this.setProgress(null);
                         this._completed = true;
                     }
 
@@ -638,6 +639,7 @@ var Cmi5;
             this.log("completed - result: ", result);
 
             if (! callback && result.response.err === null) {
+                this.setProgress(null);
                 this._completed = true;
             }
 
@@ -1346,7 +1348,7 @@ var Cmi5;
                 stCfg.verb.display = verbDisplay[verbId];
             }
 
-            if (progress !== null) {
+            if (verbId !== VERB_COMPLETED_ID && progress !== null) {
                 stCfg.result = {
                     extensions: {
                         "https://w3id.org/xapi/cmi5/result/extensions/progress": progress
