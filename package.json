@@ -1,6 +1,6 @@
 {
   "name": "cmi5.js",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A JavaScript library implementing the cmi5 specification for AUs during runtime.",
   "private": true,
   "keywords": [
