@@ -1,3 +1,4 @@
+/* globals module */
 module.exports = function (grunt) {
     "use strict";
 
@@ -10,6 +11,7 @@ module.exports = function (grunt) {
             "src/cmi5.js"
         ];
 
+    /* eslint-disable prefer-arrow-callback */
     Object.keys(pkg.devDependencies).forEach(
         function (dep) {
             if (dep.substring(0, 6) === "grunt-") {
@@ -17,6 +19,7 @@ module.exports = function (grunt) {
             }
         }
     );
+    /* eslint-enable prefer-arrow-callback */
 
     grunt.initConfig(
         {
@@ -45,24 +48,11 @@ module.exports = function (grunt) {
                 dist: srcFileList
             },
 
-            jshint: {
-                options: {
-                    jshintrc: ".jshintrc"
-                },
-                dist: [
+            eslint: {
+                target: [
                     "Gruntfile.js",
                     "src/*.js"
                 ]
-            },
-
-            jscs: {
-                dist: [
-                    "Gruntfile.js",
-                    "src/*.js"
-                ],
-                options: {
-                    config: true
-                }
             },
 
             concat: {
@@ -97,8 +87,7 @@ module.exports = function (grunt) {
         "build",
         [
             "fileExists",
-            "jshint",
-            "jscs",
+            "eslint",
             "concat",
             "uglify"
         ]

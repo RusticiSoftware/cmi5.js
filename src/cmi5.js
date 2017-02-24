@@ -1,3 +1,20 @@
+/*
+    Copyright 2017 Rustici Software
+
+    See the LICENSE.md, you may not use this file except in compliance with the License.
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+/**
+cmi5.js AU runtime library
+
+@module Cmi5
+*/
 var Cmi5;
 
 (function () {
@@ -564,7 +581,7 @@ var Cmi5;
                 }.bind(this);
             }
 
-            result = this.sendStatement(st, callback);
+            result = this.sendStatement(st, callbackWrapper);
             this.log("terminate - result: ", result);
 
             if (! callback && result.response.err === null) {
@@ -635,7 +652,7 @@ var Cmi5;
                 }.bind(this);
             }
 
-            result = this.sendStatement(st, callback);
+            result = this.sendStatement(st, callbackWrapper);
             this.log("completed - result: ", result);
 
             if (! callback && result.response.err === null) {
@@ -821,11 +838,12 @@ var Cmi5;
             @method log
         */
         log: function () {
-            /* globals console */
+            /* eslint-disable no-console */
             if (Cmi5.DEBUG && typeof console !== "undefined" && console.log) {
                 arguments[0] = "cmi5.js:" + arguments[0];
                 console.log.apply(console, arguments);
             }
+            /* eslint-enable no-console */
         },
 
         /**
