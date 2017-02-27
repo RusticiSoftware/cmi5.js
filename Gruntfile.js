@@ -1,3 +1,4 @@
+/* globals module */
 module.exports = function (grunt) {
     "use strict";
 
@@ -10,6 +11,7 @@ module.exports = function (grunt) {
             "src/cmi5.js"
         ];
 
+    /* eslint-disable prefer-arrow-callback */
     Object.keys(pkg.devDependencies).forEach(
         function (dep) {
             if (dep.substring(0, 6) === "grunt-") {
@@ -17,6 +19,7 @@ module.exports = function (grunt) {
             }
         }
     );
+    /* eslint-enable prefer-arrow-callback */
 
     grunt.initConfig(
         {
@@ -45,24 +48,11 @@ module.exports = function (grunt) {
                 dist: srcFileList
             },
 
-            jshint: {
-                options: {
-                    jshintrc: ".jshintrc"
-                },
-                dist: [
+            eslint: {
+                target: [
                     "Gruntfile.js",
                     "src/*.js"
                 ]
-            },
-
-            jscs: {
-                dist: [
-                    "Gruntfile.js",
-                    "src/*.js"
-                ],
-                options: {
-                    config: true
-                }
             },
 
             concat: {
@@ -89,6 +79,20 @@ module.exports = function (grunt) {
                         sourceMap: true
                     }
                 }
+            },
+
+            yuidoc: {
+                dist: {
+                    version: "<%= pkg.version %>",
+                    name: "cmi5.js",
+                    description: "JavaScript implementation of cmi5 AU runtime",
+                    url: "http://rusticisoftware.github.io/cmi5.js/",
+                    options: {
+                        paths: "src/",
+                        outdir: "build/doc/api/"
+                    },
+                    logo: "https://cloud.githubusercontent.com/assets/1656316/9965238/bc9deb2c-5de9-11e5-9954-63aa03873f88.png"
+                }
             }
         }
     );
@@ -97,10 +101,10 @@ module.exports = function (grunt) {
         "build",
         [
             "fileExists",
-            "jshint",
-            "jscs",
+            "eslint",
             "concat",
-            "uglify"
+            "uglify",
+            "yuidoc"
         ]
     );
     grunt.registerTask("default", "build");
