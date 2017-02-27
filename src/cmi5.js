@@ -101,9 +101,14 @@ var Cmi5;
     }
 
     /**
-        Cmi5 base object
+        Top level interface constructor.
 
-        @module Cmi5
+        It is highly recommended to use asynchronous calls to methods supporting a callback.
+
+        @class Cmi5
+        @constructor
+        @param {String} [launchString] AU Launch URL providing configuration options
+        @throws {Error} Invalid launch string
     */
     Cmi5 = function (launchString) {
         this.log("constructor", launchString);
@@ -129,11 +134,21 @@ var Cmi5;
         }
     };
 
+    /**
+        Version of this library
+
+        @property VERSION
+        @static
+        @type String
+    */
     Cmi5.VERSION = THIS_LIBRARY.VERSION;
 
     /**
+        Whether or not to enable debug logging
+
         @property DEBUG
         @static
+        @type Boolean
         @default false
     */
     Cmi5.DEBUG = false;
@@ -162,7 +177,17 @@ var Cmi5;
         _includeSourceActivity: true,
 
         /**
+            Method to call to start the AU runtime
+
+            This is a simplified "boot" sequence for the AU that will call the individual parts of the start up sequence that would otherwise need to be called in order sequentially.
+
             @method start
+            @param {Function} callback Function to call on error or success
+            @param {Object} [events] Functions to run at specific execution points
+                @param {Function} [events.postFetch] Function to run after retrieving fetchUrl result
+                @param {Function} [events.launchData] Function to run after retrieving launch data
+                @param {Function} [events.learnerPrefs] Function to run after retrieving learner preferences
+                @param {Function} [events.initializeStatement] Function to run after saving initialization statement
         */
         start: function (callback, events) {
             this.log("start");
@@ -224,7 +249,12 @@ var Cmi5;
         },
 
         /**
+            Method to POST to the fetchUrl to retrieve the LRS credentials
+
+            `setFetch` has to be called first and is called by the constructor if the launch string was provided to it.
+
             @method postFetch
+            @param {Function} [callback] Function to call on error or success
         */
         postFetch: function (callback) {
             this.log("postFetch");
@@ -238,7 +268,6 @@ var Cmi5;
 
             if (callback) {
                 cbWrapper = function (err, xhr) {
-                    /* jshint maxdepth: 5 */
                     self.log("postFetch::cbWrapper");
                     self.log("postFetch::cbWrapper", err);
                     self.log("postFetch::cbWrapper", xhr);
@@ -315,7 +344,12 @@ var Cmi5;
         },
 
         /**
+            Method to load the LMS.LaunchData state document populated by the LMS
+
+            Fetch data has to have already been loaded, in order to have LRS credential.
+
             @method loadLMSLaunchData
+            @param {Function} callback Function to call on error or success
         */
         loadLMSLaunchData: function (callback) {
             this.log("loadLMSLaunchData");
@@ -363,7 +397,10 @@ var Cmi5;
         },
 
         /**
+            Method to load learner prefs agent profile document possibly populated by the LMS
+
             @method loadLearnerPrefs
+            @param {Function} callback Function to call on error or success
         */
         loadLearnerPrefs: function (callback) {
             this.log("loadLearnerPrefs");
@@ -412,7 +449,10 @@ var Cmi5;
         },
 
         /**
+            Method to save learner prefs to agent profile document in LRS
+
             @method saveLearnerPrefs
+            @param {Function} [callback] Function to call on error or success
         */
         saveLearnerPrefs: function (callback) {
             this.log("saveLearnerPrefs");
@@ -475,7 +515,11 @@ var Cmi5;
         },
 
         /**
+            Finalize initialization process by sending initialized statement, starting duration tracker, and marking AU active
+
             @method initialize
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} <ul><li>Learner prefs not loaded</li><li>AU already initialized</li></ul>
         */
         initialize: function (callback) {
             this.log("initialize");
@@ -534,7 +578,11 @@ var Cmi5;
         },
 
         /**
+            Method to indicate session termination should occur, sends terminated statement, marks AU inactive
+
             @method terminate
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} <ul><li>AU not initialized</li><li>AU already terminated</li></ul>
         */
         terminate: function (callback) {
             this.log("terminate");
@@ -593,7 +641,11 @@ var Cmi5;
         },
 
         /**
+            Method to indicate learner has completed the AU, sends completed statement
+
             @method completed
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} <ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already completed</li></ul>
         */
         completed: function (callback) {
             this.log("completed");
@@ -664,7 +716,12 @@ var Cmi5;
         },
 
         /**
+            Method to indicate learner has passed the AU, sends passed statement with optional score
+
             @method passed
+            @param {Object} [score] Score to be included in statement (see `passedStatement`)
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} <ul><li>AU not active,</li><li>AU not in normal launch mode,</li><li>AU already passed,</li><li>Failed to create passed statement (usually because of malformed score)</li></ul>
         */
         passed: function (score, callback) {
             this.log("passed");
@@ -744,7 +801,12 @@ var Cmi5;
         },
 
         /**
+            Method to indicate learner has failed the AU, sends failed statement with optional score
+
             @method failed
+            @param {Object} [score] Score to be included in statement (see `failedStatement`)
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} <ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already passed/failed</li><li>Failed to create failed statement (usually because of malformed score)</li></ul>
         */
         failed: function (score, callback) {
             this.log("failed");
@@ -824,7 +886,10 @@ var Cmi5;
         },
 
         /**
+            Method indicating whether the AU is currently active, has been initialized and not terminated
+
             @method isActive
+            @return {Boolean} Active flag
         */
         isActive: function () {
             this.log("isActive");
@@ -834,6 +899,8 @@ var Cmi5;
         /**
             Safe version of logging, only displays when .DEBUG is true, and console.log
             is available
+
+            See `console.log` for parameters.
 
             @method log
         */
@@ -847,14 +914,23 @@ var Cmi5;
         },
 
         /**
+            Switch on/off whether a source activity is included in statements by default
+
+            Default: on
+
             @method includeSourceActivity
+            @param {Boolean} val true is include, false is exclude
         */
         includeSourceActivity: function (val) {
             this._includeSourceActivity = val ? true : false;
         },
 
         /**
+            Retrieve the launch method as provided in the LMS launch data
+
             @method getLaunchMethod
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} launch method
         */
         getLaunchMethod: function () {
             this.log("getLaunchMethod");
@@ -866,7 +942,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the launch mode as provided in the LMS launch data
+
             @method getLaunchMode
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} launch mode
         */
         getLaunchMode: function () {
             this.log("getLaunchMode");
@@ -878,7 +958,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the launch parameters when provided by the AU and in the launch data
+
             @method getLaunchParameters
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} launch parameters when exist or null
         */
         getLaunchParameters: function () {
             this.log("getLaunchParameters");
@@ -896,7 +980,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the session id
+
             @method getSessionId
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} session id
         */
         getSessionId: function () {
             this.log("getSessionId");
@@ -908,7 +996,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the moveOn value
+
             @method getMoveOn
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} moveOn value
         */
         getMoveOn: function () {
             this.log("getMoveOn");
@@ -920,7 +1012,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the mastery score as provided in LMS launch data
+
             @method getMasteryScore
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} mastery score or null
         */
         getMasteryScore: function () {
             this.log("getMasteryScore");
@@ -938,7 +1034,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the return URL as provided in LMS launch data
+
             @method getReturnUrl
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} mastery score or null
         */
         getReturnUrl: function () {
             this.log("getReturnUrl");
@@ -956,7 +1056,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the entitlement key as provided in LMS launch data
+
             @method getEntitlementKey
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} entitlement key
         */
         getEntitlementKey: function () {
             this.log("getEntitlementKey");
@@ -979,7 +1083,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the language preference as provided in learner preferences
+
             @method getLanguagePreference
+            @throws {Error} Learner preference data has not been loaded
+            @return {String|null} language preference
         */
         getLanguagePreference: function () {
             this.log("getLanguagePreference");
@@ -997,7 +1105,11 @@ var Cmi5;
         },
 
         /**
+            Locally set the learner's language preference
+
             @method setLanguagePreference
+            @param {String} pref language preference code (use `""` to unset)
+            @throws {Error} Learner preference data has not been loaded
         */
         setLanguagePreference: function (pref) {
             this.log("setLanguagePreference");
@@ -1016,7 +1128,11 @@ var Cmi5;
         },
 
         /**
+            Retrieve the audio preference as provided in learner preferences
+
             @method getAudioPreference
+            @throws {Error} Learner preference data has not been loaded
+            @return {String|null} audio preference
         */
         getAudioPreference: function () {
             this.log("getAudioPreference");
@@ -1034,7 +1150,11 @@ var Cmi5;
         },
 
         /**
+            Locally set the learner's audio preference
+
             @method setAudioPreference
+            @param {String} pref "on", "off", or `null`
+            @throws {Error} Learner preference data has not been loaded
         */
         setAudioPreference: function (pref) {
             this.log("setAudioPreference");
@@ -1053,7 +1173,10 @@ var Cmi5;
         },
 
         /**
+            Get the duration of this session so far
+
             @method getDuration
+            @return {Number} Number of milliseconds
         */
         getDuration: function () {
             this.log("getDuration");
@@ -1062,7 +1185,11 @@ var Cmi5;
         },
 
         /**
+            Locally set the progress towards completion
+
             @method setProgress
+            @param {Integer} progress progress as a percentage between 0 and 100
+            @throws {Error} <ul><li>Not an integer</li><li>Less than zero or greater than 100</li></ul>
         */
         setProgress: function (progress) {
             this.log("setProgress: ", progress);
@@ -1079,7 +1206,10 @@ var Cmi5;
         },
 
         /**
+            Get progress
+
             @method getProgress
+            @return {Integer|null} Integer value of locally set progress measure or null when not set
         */
         getProgress: function () {
             this.log("getProgress");
@@ -1087,7 +1217,10 @@ var Cmi5;
         },
 
         /**
+            Set the fetch URL, called by the `Cmi5` constructor when provided a launch URL
+
             @method setFetch
+            @param {String} fetchURL fetchURL as provided by the LMS in the launch string
         */
         setFetch: function (fetchURL) {
             this.log("setFetch: ", fetchURL);
@@ -1162,14 +1295,23 @@ var Cmi5;
         },
 
         /**
+            Retrieve the fetch URL
+
             @method getFetch
+            @return {String} the previous set fetch URL
         */
         getFetch: function () {
             return this._fetch;
         },
 
         /**
+            Initialize the LRS to a `TinCan.LRS` object or update the existing object which will be used for all xAPI communications
+
+            Called by the `Cmi5` constructor when provided a launch URL.
+
             @method setLRS
+            @param {String} endpoint LRS location
+            @param {String} auth Authentication token value
         */
         setLRS: function (endpoint, auth) {
             this.log("setLRS: ", endpoint, auth);
@@ -1193,14 +1335,23 @@ var Cmi5;
         },
 
         /**
+            Retrieve the `TinCan.LRS` object
+
             @method getLRS
+            @return {TinCan.LRS} LRS object
         */
         getLRS: function () {
             return this._lrs;
         },
 
         /**
+            Initialize the actor using a `TinCan.Agent` that will represent the learner
+
+            Called by the `Cmi5` constructor when provided a launch URL.
+
             @method setActor
+            @param {String|TinCan.Agent} agent Pre-constructed Agent or string of JSON used to construct Agent
+            @throws {Error} <ul><li>Invalid actor, missing account IFI</li><li>Invalid account IFI</li></ul>
         */
         setActor: function (agent) {
             if (! (agent instanceof TinCan.Agent)) {
@@ -1233,14 +1384,23 @@ var Cmi5;
         },
 
         /**
+            Retrieve the `TinCan.Agent` object representing the learner
+
             @method getActor
+            @return {TinCan.Agent} Learner's Agent
         */
         getActor: function () {
             return this._actor;
         },
 
         /**
+            Initialize the root object representing the AU
+
+            Called by the `Cmi5` constructor when provided a launch URL.
+
             @method setActivity
+            @param {String|TinCan.Activity} activity Pre-constructed Activity or string id used to construct Activity
+            @throws {Error} <ul><li>Invalid activity, null id</li><li>Invalid activity, empty string id</li></ul>
         */
         setActivity: function (activity) {
             if (! (activity instanceof TinCan.Activity)) {
@@ -1262,14 +1422,23 @@ var Cmi5;
         },
 
         /**
+            Retrieve the `TinCan.Activity` that is the root object representing the AU
+
             @method getActivity
+            @return {TinCan.Activity} Root Activity
         */
         getActivity: function () {
             return this._activity;
         },
 
         /**
+            Set the registration value
+
+            Called by the `Cmi5` constructor when provided a launch URL.
+
             @method setRegistration
+            @param {String} registration UUID representing the registration
+            @throws {Error} <ul><li>Invalid registration, null</li><li>Invalid registration, empty string</li></ul>
         */
         setRegistration: function (registration) {
             if (registration === null) {
@@ -1283,14 +1452,22 @@ var Cmi5;
         },
 
         /**
+            Retrieve the registration associated with the session
+
             @method getRegistration
+            @return {String} Registration
         */
         getRegistration: function () {
             return this._registration;
         },
 
         /**
+            Validate a Score object's properties
+
             @method validateScore
+            @param {TinCan.Score|Object} score Score object to validate
+            @throws {Error} <ul><li>Null or missing score argument</li><li>Non-integer min or max value (when provided)</li><li>Non-number, negative, or greater than 1 scaled value (when provided)</li><li>Non-integer, missing or invalid min/max, raw value (when provided)</li></ul>
+            @return {Boolean} true for passing, otherwise exception is thrown
         */
         validateScore: function (score) {
             if (typeof score === "undefined" || score === null) {
@@ -1343,7 +1520,13 @@ var Cmi5;
         },
 
         /**
+            Prepare a cmi5 "allowed" statement including the actor, verb, object, and context
+
+            Used to construct a cmi5 "allowed" statement with all relevant information that can then be optionally added to prior to sending.
+
             @method prepareStatement
+            @param {String} verbId Verb identifier combined with other cmi5 pre-determined information (must be IRI)
+            @return {TinCan.Statement} Statement
         */
         prepareStatement: function (verbId) {
             //
@@ -1378,7 +1561,11 @@ var Cmi5;
         },
 
         /**
+            Store provided statement in the configured LRS
+
             @method sendStatement
+            @param {TinCan.Statement} st Statement to be stored
+            @param {Function} [callback] Function to run on success/failure of statement save
         */
         sendStatement: function (st, callback) {
             var cbWrapper,
@@ -1419,7 +1606,15 @@ var Cmi5;
         */
 
         /**
+            Advanced Usage: retrieve prepared "initialized" statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
             @method initializedStatement
+            @return {TinCan.Statement} Initialized statement
         */
         initializedStatement: function () {
             this.log("initializedStatement");
@@ -1427,7 +1622,15 @@ var Cmi5;
         },
 
         /**
+            Advanced Usage: retrieve prepared "terminated" statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
             @method terminatedStatement
+            @return {TinCan.Statement} Terminated statement
         */
         terminatedStatement: function () {
             this.log("terminatedStatement");
@@ -1440,7 +1643,16 @@ var Cmi5;
         },
 
         /**
+            Advanced Usage: retrieve prepared "passed" statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
             @method passedStatement
+            @param {Object} [score] Object to be used as the score, must meet masteryScore requirements, etc.
+            @return {TinCan.Statement} Passed statement
         */
         passedStatement: function (score) {
             this.log("passedStatement");
@@ -1478,7 +1690,16 @@ var Cmi5;
         },
 
         /**
+            Advanced Usage: retrieve prepared "failed" statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
             @method failedStatement
+            @param {Object} [score] Object to be used as the score, must meet masteryScore requirements, etc.
+            @return {TinCan.Statement} Failed statement
         */
         failedStatement: function (score) {
             this.log("failedStatement");
@@ -1516,7 +1737,15 @@ var Cmi5;
         },
 
         /**
+            Advanced Usage: retrieve prepared "completed" statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
             @method completedStatement
+            @return {TinCan.Statement} Completed statement
         */
         completedStatement: function () {
             this.log("completedStatement");
@@ -1531,6 +1760,10 @@ var Cmi5;
             return st;
         },
 
+        /**
+            @method _prepareContext
+            @private
+        */
         _prepareContext: function () {
             //
             // deserializing a string version of the template is slower
@@ -1550,6 +1783,10 @@ var Cmi5;
             return context;
         },
 
+        /**
+            @method _prepareStatement
+            @private
+        */
         _prepareStatement: function (verbId) {
             //
             // statements sent by this lib are "cmi5 defined" statements meaning
@@ -1570,6 +1807,7 @@ var Cmi5;
 
         @method enableDebug
         @static
+        @param {Boolean} [includeTinCan] Whether to enable debug logging from TinCanJS
     */
     Cmi5.enableDebug = function (includeTinCan) {
         Cmi5.DEBUG = true;
@@ -1584,6 +1822,7 @@ var Cmi5;
 
         @method disableDebug
         @static
+        @param {Boolean} [includeTinCan] Whether to disable debug logging from TinCanJS
     */
     Cmi5.disableDebug = function (includeTinCan) {
         Cmi5.DEBUG = false;

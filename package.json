@@ -22,6 +22,7 @@
     "grunt-contrib-concat": "1.0.1",
     "grunt-contrib-uglify": "2.1.0",
     "grunt-contrib-watch": "1.0.0",
+    "grunt-contrib-yuidoc": "1.0.0",
     "grunt-eslint": "19.0.0",
     "grunt-file-exists": "0.1.4"
   },

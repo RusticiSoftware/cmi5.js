@@ -79,6 +79,20 @@ module.exports = function (grunt) {
                         sourceMap: true
                     }
                 }
+            },
+
+            yuidoc: {
+                dist: {
+                    version: "<%= pkg.version %>",
+                    name: "cmi5.js",
+                    description: "JavaScript implementation of cmi5 AU runtime",
+                    url: "http://rusticisoftware.github.io/cmi5.js/",
+                    options: {
+                        paths: "src/",
+                        outdir: "build/doc/api/"
+                    },
+                    logo: "https://cloud.githubusercontent.com/assets/1656316/9965238/bc9deb2c-5de9-11e5-9954-63aa03873f88.png"
+                }
             }
         }
     );
@@ -89,7 +103,8 @@ module.exports = function (grunt) {
             "fileExists",
             "eslint",
             "concat",
-            "uglify"
+            "uglify",
+            "yuidoc"
         ]
     );
     grunt.registerTask("default", "build");
