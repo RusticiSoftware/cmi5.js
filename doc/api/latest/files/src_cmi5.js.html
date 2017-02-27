@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>src/cmi5.js - cmi5.js</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="icon" href="../assets/favicon.ico">
+    <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+                <h1><img src="https://cloud.githubusercontent.com/assets/1656316/9965238/bc9deb2c-5de9-11e5-9954-63aa03873f88.png" title="cmi5.js"></h1>
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: 1.0.0</em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+                    <h2 class="off-left">APIs</h2>
+                    <div id="api-tabview" class="tabview">
+                        <ul class="tabs">
+                            <li><a href="#api-classes">Classes</a></li>
+                            <li><a href="#api-modules">Modules</a></li>
+                        </ul>
+                
+                        <div id="api-tabview-filter">
+                            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                        </div>
+                
+                        <div id="api-tabview-panel">
+                            <ul id="api-classes" class="apis classes">
+                                <li><a href="../classes/Cmi5.html">Cmi5</a></li>
+                            </ul>
+                
+                
+                            <ul id="api-modules" class="apis modules">
+                                <li><a href="../modules/Cmi5.html">Cmi5</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+                    Show:
+                    <label for="api-show-inherited">
+                        <input type="checkbox" id="api-show-inherited" checked>
+                        Inherited
+                    </label>
+            
+                    <label for="api-show-protected">
+                        <input type="checkbox" id="api-show-protected">
+                        Protected
+                    </label>
+            
+                    <label for="api-show-private">
+                        <input type="checkbox" id="api-show-private">
+                        Private
+                    </label>
+                    <label for="api-show-deprecated">
+                        <input type="checkbox" id="api-show-deprecated">
+                        Deprecated
+                    </label>
+            
+                </div>
+            
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+<h1 class="file-heading">File: src/cmi5.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+/*
+    Copyright 2017 Rustici Software
+
+    See the LICENSE.md, you may not use this file except in compliance with the License.
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+/**
+cmi5.js AU runtime library
+
+@module Cmi5
+*/
+var Cmi5;
+
+(function () {
+    &quot;use strict&quot;;
+    var THIS_LIBRARY = {
+            // set by the build step
+            VERSION: &quot;&lt;%= pkg.version %&gt;&quot;,
+            NAME: &quot;&lt;%= pkg.name %&gt;&quot;,
+            DESCRIPTION: &quot;&lt;%= pkg.description %&gt;&quot;
+        },
+        nativeRequest,
+        xdrRequest,
+        requestComplete,
+        __delay,
+        env = {},
+        STATE_LMS_LAUNCHDATA = &quot;LMS.LaunchData&quot;,
+        LAUNCH_MODE_NORMAL = &quot;Normal&quot;,
+        AGENT_PROFILE_LEARNER_PREFS = &quot;cmi5LearnerPreferences&quot;,
+        CATEGORY_ACTIVITY_CMI5 = new TinCan.Activity(
+            {
+                id: &quot;https://w3id.org/xapi/cmi5/context/categories/cmi5&quot;
+            }
+        ),
+        CATEGORY_ACTIVITY_MOVEON = new TinCan.Activity(
+            {
+                id: &quot;https://w3id.org/xapi/cmi5/context/categories/moveon&quot;
+            }
+        ),
+        OTHER_ACTIVITY_CMI5JS = new TinCan.Activity(
+            {
+                id: &quot;http://id.tincanapi.com/activity/software/&quot; + THIS_LIBRARY.NAME + &quot;/&quot; + THIS_LIBRARY.VERSION,
+                definition: {
+                    name: {
+                        und: THIS_LIBRARY.NAME + &quot; (&quot; + THIS_LIBRARY.VERSION + &quot;)&quot;
+                    },
+                    description: {
+                        &quot;en&quot;: THIS_LIBRARY.DESCRIPTION
+                    },
+                    type: &quot;http://id.tincanapi.com/activitytype/source&quot;
+                }
+            }
+        ),
+        EXTENSION_SESSION_ID = &quot;https://w3id.org/xapi/cmi5/context/extensions/sessionid&quot;,
+        EXTENSION_MASTERY_SCORE = &quot;https://w3id.org/xapi/cmi5/context/extensions/masteryscore&quot;,
+        VERB_INITIALIZED_ID = &quot;http://adlnet.gov/expapi/verbs/initialized&quot;,
+        VERB_TERMINATED_ID = &quot;http://adlnet.gov/expapi/verbs/terminated&quot;,
+        VERB_COMPLETED_ID = &quot;http://adlnet.gov/expapi/verbs/completed&quot;,
+        VERB_PASSED_ID = &quot;http://adlnet.gov/expapi/verbs/passed&quot;,
+        VERB_FAILED_ID = &quot;http://adlnet.gov/expapi/verbs/failed&quot;,
+        verbDisplay = {},
+        launchParameters = [
+            &quot;endpoint&quot;,
+            &quot;fetch&quot;,
+            &quot;actor&quot;,
+            &quot;activityId&quot;,
+            &quot;registration&quot;
+        ],
+        isInteger;
+
+    // polyfill for Number.isInteger from MDN
+    isInteger = function (value) {
+        return typeof value === &quot;number&quot; &amp;&amp; isFinite(value) &amp;&amp; Math.floor(value) === value;
+    };
+
+    verbDisplay[VERB_INITIALIZED_ID] = {
+        &quot;en&quot;: &quot;initialized&quot;
+    };
+    verbDisplay[VERB_TERMINATED_ID] = {
+        &quot;en&quot;: &quot;terminated&quot;
+    };
+
+    //
+    // Detect CORS and XDR support
+    //
+    env.hasCORS = false;
+    env.useXDR = false;
+
+    if (typeof XMLHttpRequest !== &quot;undefined&quot; &amp;&amp; typeof (new XMLHttpRequest()).withCredentials !== &quot;undefined&quot;) {
+        env.hasCORS = true;
+    }
+    else if (typeof XDomainRequest !== &quot;undefined&quot;) {
+        env.hasCORS = true;
+        env.useXDR = true;
+    }
+
+    /**
+        Top level interface constructor.
+
+        It is highly recommended to use asynchronous calls to methods supporting a callback.
+
+        @class Cmi5
+        @constructor
+        @param {String} [launchString] AU Launch URL providing configuration options
+        @throws {Error} Invalid launch string
+    */
+    Cmi5 = function (launchString) {
+        this.log(&quot;constructor&quot;, launchString);
+        var url,
+            cfg,
+            i;
+
+        if (typeof launchString !== &quot;undefined&quot;) {
+            url = new URI(launchString);
+            cfg = url.search(true);
+
+            for (i = 0; i &lt; launchParameters.length; i += 1) {
+                if (typeof cfg[launchParameters[i]] === &quot;undefined&quot; || cfg[launchParameters[i]] === &quot;&quot;) {
+                    throw new Error(&quot;Invalid launch string missing or empty parameter: &quot; + launchParameters[i]);
+                }
+            }
+
+            this.setFetch(cfg.fetch);
+            this.setLRS(cfg.endpoint);
+            this.setActor(cfg.actor);
+            this.setActivity(cfg.activityId);
+            this.setRegistration(cfg.registration);
+        }
+    };
+
+    /**
+        Version of this library
+
+        @property VERSION
+        @static
+        @type String
+    */
+    Cmi5.VERSION = THIS_LIBRARY.VERSION;
+
+    /**
+        Whether or not to enable debug logging
+
+        @property DEBUG
+        @static
+        @type Boolean
+        @default false
+    */
+    Cmi5.DEBUG = false;
+
+    Cmi5.prototype = {
+        _fetch: null,
+        _endpoint: null,
+        _actor: null,
+        _registration: null,
+        _activity: null,
+
+        _lrs: null,
+        _fetchRequest: null,
+        _fetchContent: null,
+        _lmsLaunchData: null,
+        _contextTemplate: null,
+        _learnerPrefs: null,
+        _isActive: false,
+        _initialized: null,
+        _passed: null,
+        _failed: null,
+        _completed: null,
+        _terminated: null,
+        _durationStart: null,
+        _progress: null,
+        _includeSourceActivity: true,
+
+        /**
+            Method to call to start the AU runtime
+
+            This is a simplified &quot;boot&quot; sequence for the AU that will call the individual parts of the start up sequence that would otherwise need to be called in order sequentially.
+
+            @method start
+            @param {Function} callback Function to call on error or success
+            @param {Object} [events] Functions to run at specific execution points
+                @param {Function} [events.postFetch] Function to run after retrieving fetchUrl result
+                @param {Function} [events.launchData] Function to run after retrieving launch data
+                @param {Function} [events.learnerPrefs] Function to run after retrieving learner preferences
+                @param {Function} [events.initializeStatement] Function to run after saving initialization statement
+        */
+        start: function (callback, events) {
+            this.log(&quot;start&quot;);
+            var self = this;
+
+            events = events || {};
+
+            self.postFetch(
+                function (err) {
+                    var prefix = &quot;Failed to start AU - &quot;;
+
+                    if (typeof events.postFetch !== &quot;undefined&quot;) {
+                        events.postFetch.apply(this, arguments);
+                    }
+                    if (err !== null) {
+                        callback(new Error(prefix + &quot; POST to fetch: &quot; + err));
+                        return;
+                    }
+
+                    self.loadLMSLaunchData(
+                        function (err) {
+                            if (typeof events.launchData !== &quot;undefined&quot;) {
+                                events.launchData.apply(this, arguments);
+                            }
+                            if (err !== null) {
+                                callback(new Error(prefix + &quot; load LMS LaunchData: &quot; + err));
+                                return;
+                            }
+
+                            self.loadLearnerPrefs(
+                                function (err) {
+                                    if (typeof events.learnerPrefs !== &quot;undefined&quot;) {
+                                        events.learnerPrefs.apply(this, arguments);
+                                    }
+                                    if (err !== null) {
+                                        callback(new Error(prefix + &quot; load learner preferences: &quot; + err));
+                                        return;
+                                    }
+
+                                    self.initialize(
+                                        function (err) {
+                                            if (typeof events.initializeStatement !== &quot;undefined&quot;) {
+                                                events.initializeStatement.apply(this, arguments);
+                                            }
+                                            if (err !== null) {
+                                                callback(new Error(prefix + &quot; send initialized statement: &quot; + err));
+                                                return;
+                                            }
+
+                                            callback(null);
+                                        }
+                                    );
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        },
+
+        /**
+            Method to POST to the fetchUrl to retrieve the LRS credentials
+
+            &#x60;setFetch&#x60; has to be called first and is called by the constructor if the launch string was provided to it.
+
+            @method postFetch
+            @param {Function} [callback] Function to call on error or success
+        */
+        postFetch: function (callback) {
+            this.log(&quot;postFetch&quot;);
+            var self = this,
+                cbWrapper;
+
+            if (this._fetch === null) {
+                callback(new Error(&quot;Can&#x27;t POST to fetch URL without setFetch&quot;));
+                return;
+            }
+
+            if (callback) {
+                cbWrapper = function (err, xhr) {
+                    self.log(&quot;postFetch::cbWrapper&quot;);
+                    self.log(&quot;postFetch::cbWrapper&quot;, err);
+                    self.log(&quot;postFetch::cbWrapper&quot;, xhr);
+                    var parsed,
+                        responseContent = xhr.responseText,
+                        responseContentType;
+
+                    if (err !== null) {
+                        if (err === 0) {
+                            err = &quot;Aborted, offline, or invalid CORS endpoint&quot;;
+                        }
+                        else if (/^\d+$/.test(err)) {
+                            if (typeof xhr.getResponseHeader !== &quot;undefined&quot;) {
+                                responseContentType = xhr.getResponseHeader(&quot;Content-Type&quot;);
+                            }
+                            else if (typeof xhr.contentType !== &quot;undefined&quot;) {
+                                responseContentType = xhr.contentType;
+                            }
+                            if (TinCan.Utils.isApplicationJSON(responseContentType)) {
+                                try {
+                                    parsed = JSON.parse(responseContent);
+
+                                    if (typeof parsed[&quot;error-text&quot;] !== &quot;undefined&quot;) {
+                                        err = parsed[&quot;error-text&quot;] + &quot; (&quot; + parsed[&quot;error-code&quot;] + &quot;)&quot;;
+                                    }
+                                    else {
+                                        err = &quot;Failed to detect &#x27;error-text&#x27; property in JSON error response&quot;;
+                                    }
+                                }
+                                catch (ex) {
+                                    err = &quot;Failed to parse JSON error response: &quot; + ex;
+                                }
+                            }
+                            else {
+                                err = xhr.responseText;
+                            }
+                        }
+                        else {
+                            err = xhr.responseText;
+                        }
+                        callback(new Error(err), xhr, parsed);
+                        return;
+                    }
+
+                    try {
+                        parsed = JSON.parse(responseContent);
+                    }
+                    catch (ex) {
+                        self.log(&quot;postFetch::cbWrapper - failed to parse JSON response: &quot; + ex);
+                        callback(new Error(&quot;Post fetch response malformed: failed to parse JSON response (&quot; + ex + &quot;)&quot;), xhr);
+                        return;
+                    }
+
+                    if (parsed === null || typeof parsed !== &quot;object&quot; || typeof parsed[&quot;auth-token&quot;] === &quot;undefined&quot;) {
+                        self.log(&quot;postFetch::cbWrapper - failed to access &#x27;auth-token&#x27; property&quot;);
+                        callback(new Error(&quot;Post fetch response malformed: failed to access &#x27;auth-token&#x27; in (&quot; + responseContent + &quot;)&quot;), xhr, parsed);
+                        return;
+                    }
+
+                    self._fetchContent = parsed;
+                    self._lrs.auth = &quot;Basic &quot; + parsed[&quot;auth-token&quot;];
+
+                    callback(err, xhr, parsed);
+                };
+            }
+
+            return this._fetchRequest(
+                this._fetch,
+                {
+                    method: &quot;POST&quot;
+                },
+                cbWrapper
+            );
+        },
+
+        /**
+            Method to load the LMS.LaunchData state document populated by the LMS
+
+            Fetch data has to have already been loaded, in order to have LRS credential.
+
+            @method loadLMSLaunchData
+            @param {Function} callback Function to call on error or success
+        */
+        loadLMSLaunchData: function (callback) {
+            this.log(&quot;loadLMSLaunchData&quot;);
+            var self = this;
+
+            if (this._fetchContent === null) {
+                callback(new Error(&quot;Can&#x27;t retrieve LMS Launch Data without successful postFetch&quot;));
+                return;
+            }
+
+            this._lrs.retrieveState(
+                STATE_LMS_LAUNCHDATA,
+                {
+                    activity: this._activity,
+                    agent: this._actor,
+                    registration: this._registration,
+                    callback: function (err, result) {
+                        if (err !== null) {
+                            callback(new Error(&quot;Failed to retrieve &quot; + STATE_LMS_LAUNCHDATA + &quot; State: &quot; + err), result);
+                            return;
+                        }
+
+                        //
+                        // a missing state isn&#x27;t an error as far as TinCanJS is concerned, but
+                        // getting a 404 on the LMS LaunchData is a problem in cmi5 so fail here
+                        // in that case (which is when result is null)
+                        //
+                        if (result === null) {
+                            callback(new Error(STATE_LMS_LAUNCHDATA + &quot; State not found&quot;), result);
+                            return;
+                        }
+
+                        self._lmsLaunchData = result.contents;
+
+                        //
+                        // store a stringified version of the context template for cheap
+                        // cloning when we go to prepare it later for use in statements
+                        //
+                        self._contextTemplate = JSON.stringify(self._lmsLaunchData.contextTemplate);
+
+                        callback(null, result);
+                    }
+                }
+            );
+        },
+
+        /**
+            Method to load learner prefs agent profile document possibly populated by the LMS
+
+            @method loadLearnerPrefs
+            @param {Function} callback Function to call on error or success
+        */
+        loadLearnerPrefs: function (callback) {
+            this.log(&quot;loadLearnerPrefs&quot;);
+            var self = this;
+
+            if (this._lmsLaunchData === null) {
+                callback(new Error(&quot;Can&#x27;t retrieve Learner Preferences without successful loadLMSLaunchData&quot;));
+                return;
+            }
+
+            this._lrs.retrieveAgentProfile(
+                AGENT_PROFILE_LEARNER_PREFS,
+                {
+                    agent: this._actor,
+                    callback: function (err, result) {
+                        if (err !== null) {
+                            callback(new Error(&quot;Failed to retrieve &quot; + AGENT_PROFILE_LEARNER_PREFS + &quot; Agent Profile&quot; + err), result);
+                            return;
+                        }
+
+                        //
+                        // result is null when the profile 404s which is not an error,
+                        // just means it hasn&#x27;t been set to anything
+                        //
+                        if (result !== null) {
+                            self._learnerPrefs = result;
+                        }
+                        else {
+                            //
+                            // store an empty object locally to be able to distinguish a non-set
+                            // preference document vs a non-fetched preference document
+                            //
+                            self._learnerPrefs = new TinCan.AgentProfile(
+                                {
+                                    id: AGENT_PROFILE_LEARNER_PREFS,
+                                    contentType: &quot;application/json&quot;,
+                                    contents: {}
+                                }
+                            );
+                        }
+
+                        callback(null, result);
+                    }
+                }
+            );
+        },
+
+        /**
+            Method to save learner prefs to agent profile document in LRS
+
+            @method saveLearnerPrefs
+            @param {Function} [callback] Function to call on error or success
+        */
+        saveLearnerPrefs: function (callback) {
+            this.log(&quot;saveLearnerPrefs&quot;);
+            var self = this,
+                result,
+                cbWrapper;
+
+            if (this._learnerPrefs === null) {
+                result = new Error(&quot;Can&#x27;t save Learner Preferences without first loading them&quot;);
+                if (callback) {
+                    callback(result);
+                    return;
+                }
+                return result;
+            }
+
+            if (callback) {
+                cbWrapper = function (err, result) {
+                    self.log(&quot;saveLearnerPrefs - saveAgentProfile callback&quot;, err, result);
+                    if (err !== null) {
+                        callback(new Error(&quot;Failed to save &quot; + AGENT_PROFILE_LEARNER_PREFS + &quot; Agent Profile: &quot; + err), result);
+                        return;
+                    }
+
+                    self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
+                        (typeof self._learnerPrefs.contents === &quot;object&quot; &amp;&amp; TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                            ? JSON.stringify(self._learnerPrefs.contents)
+                            : self._learnerPrefs.contents
+                    );
+
+                    callback(null, result);
+                };
+            }
+
+            result = this._lrs.saveAgentProfile(
+                AGENT_PROFILE_LEARNER_PREFS,
+                this._learnerPrefs.contents,
+                {
+                    agent: this._actor,
+                    lastSHA1: this._learnerPrefs.etag,
+                    contentType: this._learnerPrefs.contentType,
+                    callback: cbWrapper
+                }
+            );
+            if (cbWrapper) {
+                return;
+            }
+
+            if (result.err !== null) {
+                return new Error(&quot;Failed to save &quot; + AGENT_PROFILE_LEARNER_PREFS + &quot; Agent Profile: &quot; + result.err);
+            }
+
+            self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
+                (typeof self._learnerPrefs.contents === &quot;object&quot; &amp;&amp; TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                    ? JSON.stringify(self._learnerPrefs.contents)
+                    : self._learnerPrefs.contents
+            );
+
+            return;
+        },
+
+        /**
+            Finalize initialization process by sending initialized statement, starting duration tracker, and marking AU active
+
+            @method initialize
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} &lt;ul&gt;&lt;li&gt;Learner prefs not loaded&lt;/li&gt;&lt;li&gt;AU already initialized&lt;/li&gt;&lt;/ul&gt;
+        */
+        initialize: function (callback) {
+            this.log(&quot;initialize&quot;);
+            var st,
+                err,
+                callbackWrapper,
+                result;
+
+            if (this._learnerPrefs === null) {
+                err = new Error(&quot;Can&#x27;t send initialized statement without successful loadLearnerPrefs&quot;);
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this._initialized) {
+                this.log(&quot;initialize - already initialized&quot;);
+
+                err = new Error(&quot;AU already initialized&quot;);
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            st = this.initializedStatement();
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log(&quot;initialize - callbackWrapper: &quot; + err);
+                    if (err === null) {
+                        this._initialized = true;
+                        this._isActive = true;
+                        this._durationStart = new Date().getTime();
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log(&quot;initialize - result: &quot;, result);
+
+            if (! callback &amp;&amp; result.response.err === null) {
+                this._initialized = true;
+                this._isActive = true;
+                this._durationStart = new Date().getTime();
+            }
+
+            return result;
+        },
+
+        /**
+            Method to indicate session termination should occur, sends terminated statement, marks AU inactive
+
+            @method terminate
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} &lt;ul&gt;&lt;li&gt;AU not initialized&lt;/li&gt;&lt;li&gt;AU already terminated&lt;/li&gt;&lt;/ul&gt;
+        */
+        terminate: function (callback) {
+            this.log(&quot;terminate&quot;);
+            var st,
+                err,
+                callbackWrapper,
+                result;
+
+            if (! this._initialized) {
+                this.log(&quot;terminate - not initialized&quot;);
+
+                err = new Error(&quot;AU not initialized&quot;);
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this._terminated) {
+                this.log(&quot;terminate - already terminated&quot;);
+
+                err = new Error(&quot;AU already terminated&quot;);
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            st = this.terminatedStatement();
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log(&quot;terminate - callbackWrapper: &quot; + err);
+                    if (err === null) {
+                        this._terminated = true;
+                        this._isActive = false;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log(&quot;terminate - result: &quot;, result);
+
+            if (! callback &amp;&amp; result.response.err === null) {
+                this._terminated = true;
+                this._isActive = false;
+            }
+
+            return result;
+        },
+
+        /**
+            Method to indicate learner has completed the AU, sends completed statement
+
+            @method completed
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} &lt;ul&gt;&lt;li&gt;AU not active&lt;/li&gt;&lt;li&gt;AU not in normal launch mode&lt;/li&gt;&lt;li&gt;AU already completed&lt;/li&gt;&lt;/ul&gt;
+        */
+        completed: function (callback) {
+            this.log(&quot;completed&quot;);
+            var st,
+                err,
+                callbackWrapper,
+                result;
+
+            if (! this.isActive()) {
+                this.log(&quot;completed - not active&quot;);
+                err = new Error(&quot;AU not active&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this.getLaunchMode() !== LAUNCH_MODE_NORMAL) {
+                this.log(&quot;completed - non-Normal launch mode: &quot;, this.getLaunchMode());
+                err = new Error(&quot;AU not in Normal launch mode&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this._completed) {
+                this.log(&quot;completed - already completed&quot;);
+                err = new Error(&quot;AU already completed&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            st = this.completedStatement();
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log(&quot;completed - callbackWrapper: &quot; + err);
+                    if (err === null) {
+                        this.setProgress(null);
+                        this._completed = true;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log(&quot;completed - result: &quot;, result);
+
+            if (! callback &amp;&amp; result.response.err === null) {
+                this.setProgress(null);
+                this._completed = true;
+            }
+
+            return result;
+        },
+
+        /**
+            Method to indicate learner has passed the AU, sends passed statement with optional score
+
+            @method passed
+            @param {Object} [score] Score to be included in statement (see &#x60;passedStatement&#x60;)
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} &lt;ul&gt;&lt;li&gt;AU not active,&lt;/li&gt;&lt;li&gt;AU not in normal launch mode,&lt;/li&gt;&lt;li&gt;AU already passed,&lt;/li&gt;&lt;li&gt;Failed to create passed statement (usually because of malformed score)&lt;/li&gt;&lt;/ul&gt;
+        */
+        passed: function (score, callback) {
+            this.log(&quot;passed&quot;);
+            var st,
+                err,
+                callbackWrapper,
+                result;
+
+            if (! this.isActive()) {
+                this.log(&quot;passed - not active&quot;);
+                err = new Error(&quot;AU not active&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this.getLaunchMode() !== LAUNCH_MODE_NORMAL) {
+                this.log(&quot;passed - non-Normal launch mode: &quot;, this.getLaunchMode());
+                err = new Error(&quot;AU not in Normal launch mode&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this._passed !== null) {
+                this.log(&quot;passed - already passed&quot;);
+                err = new Error(&quot;AU already passed&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            try {
+                st = this.passedStatement(score);
+            }
+            catch (ex) {
+                this.log(&quot;passed - failed to create passed statement: &quot; + ex);
+                if (callback) {
+                    callback(&quot;Failed to create passed statement - &quot; + ex);
+                    return;
+                }
+
+                throw ex;
+            }
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log(&quot;passed - callbackWrapper: &quot; + err);
+                    if (err === null) {
+                        this._passed = true;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log(&quot;passed - result: &quot;, result);
+
+            if (! callback &amp;&amp; result.response.err === null) {
+                this._passed = true;
+            }
+
+            return result;
+        },
+
+        /**
+            Method to indicate learner has failed the AU, sends failed statement with optional score
+
+            @method failed
+            @param {Object} [score] Score to be included in statement (see &#x60;failedStatement&#x60;)
+            @param {Function} [callback] Function to call on error or success
+            @throws {Error} &lt;ul&gt;&lt;li&gt;AU not active&lt;/li&gt;&lt;li&gt;AU not in normal launch mode&lt;/li&gt;&lt;li&gt;AU already passed/failed&lt;/li&gt;&lt;li&gt;Failed to create failed statement (usually because of malformed score)&lt;/li&gt;&lt;/ul&gt;
+        */
+        failed: function (score, callback) {
+            this.log(&quot;failed&quot;);
+            var st,
+                err,
+                callbackWrapper,
+                result;
+
+            if (! this.isActive()) {
+                this.log(&quot;failed - not active&quot;);
+                err = new Error(&quot;AU not active&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this.getLaunchMode() !== LAUNCH_MODE_NORMAL) {
+                this.log(&quot;failed - non-Normal launch mode: &quot;, this.getLaunchMode());
+                err = new Error(&quot;AU not in Normal launch mode&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            if (this._failed !== null || this._passed !== null) {
+                this.log(&quot;failed - already passed/failed&quot;);
+                err = new Error(&quot;AU already passed/failed&quot;);
+
+                if (callback) {
+                    callback(err);
+                    return;
+                }
+
+                throw err;
+            }
+
+            try {
+                st = this.failedStatement(score);
+            }
+            catch (ex) {
+                this.log(&quot;failed - failed to create failed statement: &quot; + ex);
+                if (callback) {
+                    callback(&quot;Failed to create failed statement - &quot; + ex);
+                    return;
+                }
+
+                throw ex;
+            }
+
+            if (callback) {
+                callbackWrapper = function (err) {
+                    this.log(&quot;failed - callbackWrapper: &quot; + err);
+                    if (err === null) {
+                        this._failed = true;
+                    }
+
+                    callback.apply(this, arguments);
+                }.bind(this);
+            }
+
+            result = this.sendStatement(st, callbackWrapper);
+            this.log(&quot;failed - result: &quot;, result);
+
+            if (! callback &amp;&amp; result.response.err === null) {
+                this._failed = true;
+            }
+
+            return result;
+        },
+
+        /**
+            Method indicating whether the AU is currently active, has been initialized and not terminated
+
+            @method isActive
+            @return {Boolean} Active flag
+        */
+        isActive: function () {
+            this.log(&quot;isActive&quot;);
+            return this._isActive;
+        },
+
+        /**
+            Safe version of logging, only displays when .DEBUG is true, and console.log
+            is available
+
+            See &#x60;console.log&#x60; for parameters.
+
+            @method log
+        */
+        log: function () {
+            /* eslint-disable no-console */
+            if (Cmi5.DEBUG &amp;&amp; typeof console !== &quot;undefined&quot; &amp;&amp; console.log) {
+                arguments[0] = &quot;cmi5.js:&quot; + arguments[0];
+                console.log.apply(console, arguments);
+            }
+            /* eslint-enable no-console */
+        },
+
+        /**
+            Switch on/off whether a source activity is included in statements by default
+
+            Default: on
+
+            @method includeSourceActivity
+            @param {Boolean} val true is include, false is exclude
+        */
+        includeSourceActivity: function (val) {
+            this._includeSourceActivity = val ? true : false;
+        },
+
+        /**
+            Retrieve the launch method as provided in the LMS launch data
+
+            @method getLaunchMethod
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} launch method
+        */
+        getLaunchMethod: function () {
+            this.log(&quot;getLaunchMethod&quot;);
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine launchMethod until LMS LaunchData has been loaded&quot;);
+            }
+
+            return this._lmsLaunchData.launchMethod;
+        },
+
+        /**
+            Retrieve the launch mode as provided in the LMS launch data
+
+            @method getLaunchMode
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} launch mode
+        */
+        getLaunchMode: function () {
+            this.log(&quot;getLaunchMode&quot;);
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine launchMode until LMS LaunchData has been loaded&quot;);
+            }
+
+            return this._lmsLaunchData.launchMode;
+        },
+
+        /**
+            Retrieve the launch parameters when provided by the AU and in the launch data
+
+            @method getLaunchParameters
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} launch parameters when exist or null
+        */
+        getLaunchParameters: function () {
+            this.log(&quot;getLaunchParameters&quot;);
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine LaunchParameters until LMS LaunchData has been loaded&quot;);
+            }
+
+            if (typeof this._lmsLaunchData.launchParameters !== &quot;undefined&quot;) {
+                result = this._lmsLaunchData.launchParameters;
+            }
+
+            return result;
+        },
+
+        /**
+            Retrieve the session id
+
+            @method getSessionId
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} session id
+        */
+        getSessionId: function () {
+            this.log(&quot;getSessionId&quot;);
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine session id until LMS LaunchData has been loaded&quot;);
+            }
+
+            return this._lmsLaunchData.contextTemplate.extensions[EXTENSION_SESSION_ID];
+        },
+
+        /**
+            Retrieve the moveOn value
+
+            @method getMoveOn
+            @throws {Error} LMS launch data has not been loaded
+            @return {String} moveOn value
+        */
+        getMoveOn: function () {
+            this.log(&quot;getMoveOn&quot;);
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine moveOn until LMS LaunchData has been loaded&quot;);
+            }
+
+            return this._lmsLaunchData.moveOn;
+        },
+
+        /**
+            Retrieve the mastery score as provided in LMS launch data
+
+            @method getMasteryScore
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} mastery score or null
+        */
+        getMasteryScore: function () {
+            this.log(&quot;getMasteryScore&quot;);
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine masteryScore until LMS LaunchData has been loaded&quot;);
+            }
+
+            if (typeof this._lmsLaunchData.masteryScore !== &quot;undefined&quot;) {
+                result = this._lmsLaunchData.masteryScore;
+            }
+
+            return result;
+        },
+
+        /**
+            Retrieve the return URL as provided in LMS launch data
+
+            @method getReturnUrl
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} mastery score or null
+        */
+        getReturnUrl: function () {
+            this.log(&quot;getReturnUrl&quot;);
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine returnUrl until LMS LaunchData has been loaded&quot;);
+            }
+
+            if (typeof this._lmsLaunchData.returnUrl !== &quot;undefined&quot;) {
+                result = this._lmsLaunchData.returnUrl;
+            }
+
+            return result;
+        },
+
+        /**
+            Retrieve the entitlement key as provided in LMS launch data
+
+            @method getEntitlementKey
+            @throws {Error} LMS launch data has not been loaded
+            @return {String|null} entitlement key
+        */
+        getEntitlementKey: function () {
+            this.log(&quot;getEntitlementKey&quot;);
+            var result = null;
+
+            if (this._lmsLaunchData === null) {
+                throw new Error(&quot;Can&#x27;t determine entitlementKey until LMS LaunchData has been loaded&quot;);
+            }
+
+            if (typeof this._lmsLaunchData.entitlementKey !== &quot;undefined&quot;) {
+                if (typeof this._lmsLaunchData.entitlementKey.alternate !== &quot;undefined&quot;) {
+                    result = this._lmsLaunchData.entitlementKey.alternate;
+                }
+                else if (typeof this._lmsLaunchData.entitlementKey.courseStructure !== &quot;undefined&quot;) {
+                    result = this._lmsLaunchData.entitlementKey.courseStructure;
+                }
+            }
+
+            return result;
+        },
+
+        /**
+            Retrieve the language preference as provided in learner preferences
+
+            @method getLanguagePreference
+            @throws {Error} Learner preference data has not been loaded
+            @return {String|null} language preference
+        */
+        getLanguagePreference: function () {
+            this.log(&quot;getLanguagePreference&quot;);
+            var result = null;
+
+            if (this._learnerPrefs === null) {
+                throw new Error(&quot;Can&#x27;t determine language preference until learner preferences have been loaded&quot;);
+            }
+
+            if (typeof this._learnerPrefs.contents.languagePreference !== &quot;undefined&quot;) {
+                result = this._learnerPrefs.contents.languagePreference;
+            }
+
+            return result;
+        },
+
+        /**
+            Locally set the learner&#x27;s language preference
+
+            @method setLanguagePreference
+            @param {String} pref language preference code (use &#x60;&quot;&quot;&#x60; to unset)
+            @throws {Error} Learner preference data has not been loaded
+        */
+        setLanguagePreference: function (pref) {
+            this.log(&quot;setLanguagePreference&quot;);
+
+            if (this._learnerPrefs === null) {
+                throw new Error(&quot;Can&#x27;t set language preference until learner preferences have been loaded&quot;);
+            }
+
+            if (pref === &quot;&quot;) {
+                pref = null;
+            }
+
+            this._learnerPrefs.contents.languagePreference = pref;
+
+            return;
+        },
+
+        /**
+            Retrieve the audio preference as provided in learner preferences
+
+            @method getAudioPreference
+            @throws {Error} Learner preference data has not been loaded
+            @return {String|null} audio preference
+        */
+        getAudioPreference: function () {
+            this.log(&quot;getAudioPreference&quot;);
+            var result = null;
+
+            if (this._learnerPrefs === null) {
+                throw new Error(&quot;Can&#x27;t determine audio preference until learner preferences have been loaded&quot;);
+            }
+
+            if (typeof this._learnerPrefs.contents.audioPreference !== &quot;undefined&quot;) {
+                result = this._learnerPrefs.contents.audioPreference;
+            }
+
+            return result;
+        },
+
+        /**
+            Locally set the learner&#x27;s audio preference
+
+            @method setAudioPreference
+            @param {String} pref &quot;on&quot;, &quot;off&quot;, or &#x60;null&#x60;
+            @throws {Error} Learner preference data has not been loaded
+        */
+        setAudioPreference: function (pref) {
+            this.log(&quot;setAudioPreference&quot;);
+
+            if (this._learnerPrefs === null) {
+                throw new Error(&quot;Can&#x27;t set audio preference until learner preferences have been loaded&quot;);
+            }
+
+            if (pref !== &quot;on&quot; &amp;&amp; pref !== &quot;off&quot; &amp;&amp; pref !== null) {
+                throw new Error(&quot;Unrecognized value for audio preference: &quot; + pref);
+            }
+
+            this._learnerPrefs.contents.audioPreference = pref;
+
+            return;
+        },
+
+        /**
+            Get the duration of this session so far
+
+            @method getDuration
+            @return {Number} Number of milliseconds
+        */
+        getDuration: function () {
+            this.log(&quot;getDuration&quot;);
+
+            return (new Date().getTime() - this._durationStart);
+        },
+
+        /**
+            Locally set the progress towards completion
+
+            @method setProgress
+            @param {Integer} progress progress as a percentage between 0 and 100
+            @throws {Error} &lt;ul&gt;&lt;li&gt;Not an integer&lt;/li&gt;&lt;li&gt;Less than zero or greater than 100&lt;/li&gt;&lt;/ul&gt;
+        */
+        setProgress: function (progress) {
+            this.log(&quot;setProgress: &quot;, progress);
+
+            if (progress !== null) {
+                if (! isInteger(progress)) {
+                    throw new Error(&quot;Invalid progress measure (not an integer): &quot; + progress);
+                }
+                if (progress &lt; 0 || progress &gt; 100) {
+                    throw new Error(&quot;Invalid progress measure must be greater than or equal to 0 and less than or equal to 100: &quot; + progress);
+                }
+            }
+            this._progress = progress;
+        },
+
+        /**
+            Get progress
+
+            @method getProgress
+            @return {Integer|null} Integer value of locally set progress measure or null when not set
+        */
+        getProgress: function () {
+            this.log(&quot;getProgress&quot;);
+            return this._progress;
+        },
+
+        /**
+            Set the fetch URL, called by the &#x60;Cmi5&#x60; constructor when provided a launch URL
+
+            @method setFetch
+            @param {String} fetchURL fetchURL as provided by the LMS in the launch string
+        */
+        setFetch: function (fetchURL) {
+            this.log(&quot;setFetch: &quot;, fetchURL);
+            var urlParts,
+                schemeMatches,
+                locationPort,
+                isXD;
+
+            this._fetch = fetchURL;
+
+            //
+            // default to native request mode
+            //
+            this._fetchRequest = nativeRequest;
+
+            // TODO: swap this for uri.js
+
+            urlParts = fetchURL.toLowerCase().match(/([A-Za-z]+:)\/\/([^:\/]+):?(\d+)?(\/.*)?$/);
+            if (urlParts === null) {
+                throw new Error(&quot;URL invalid: failed to divide URL parts&quot;);
+            }
+
+            //
+            // determine whether this is a cross domain request,
+            // whether our browser has CORS support at all, and then
+            // if it does then if we are in IE with XDR only check that
+            // the schemes match to see if we should be able to talk to
+            // the other side
+            //
+            locationPort = location.port;
+            schemeMatches = location.protocol.toLowerCase() === urlParts[1];
+
+            //
+            // normalize the location.port cause it appears to be &quot;&quot; when 80/443
+            // but our endpoint may have provided it
+            //
+            if (locationPort === &quot;&quot;) {
+                locationPort = (location.protocol.toLowerCase() === &quot;http:&quot; ? &quot;80&quot; : (location.protocol.toLowerCase() === &quot;https:&quot; ? &quot;443&quot; : &quot;&quot;));
+            }
+
+            isXD = (
+
+                // is same scheme?
+                ! schemeMatches
+
+                // is same host?
+                || location.hostname.toLowerCase() !== urlParts[2]
+
+                // is same port?
+                || locationPort !== (
+                    (urlParts[3] !== null &amp;&amp; typeof urlParts[3] !== &quot;undefined&quot; &amp;&amp; urlParts[3] !== &quot;&quot;)
+                        ? urlParts[3]
+                        : (urlParts[1] === &quot;http:&quot; ? &quot;80&quot; : (urlParts[1] === &quot;https:&quot; ? &quot;443&quot; : &quot;&quot;)
+                    )
+                )
+            );
+            if (isXD) {
+                if (env.hasCORS) {
+                    if (env.useXDR &amp;&amp; schemeMatches) {
+                        this._fetchRequest = xdrRequest;
+                    }
+                    else if (env.useXDR &amp;&amp; ! schemeMatches) {
+                        this.log(&quot;[error] URL invalid: cross domain request for differing scheme in IE with XDR&quot;);
+                        throw new Error(&quot;URL invalid: cross domain request for differing scheme in IE with XDR&quot;);
+                    }
+                }
+                else {
+                    this.log(&quot;[error] URL invalid: cross domain requests not supported in this browser&quot;);
+                    throw new Error(&quot;URL invalid: cross domain requests not supported in this browser&quot;);
+                }
+            }
+        },
+
+        /**
+            Retrieve the fetch URL
+
+            @method getFetch
+            @return {String} the previous set fetch URL
+        */
+        getFetch: function () {
+            return this._fetch;
+        },
+
+        /**
+            Initialize the LRS to a &#x60;TinCan.LRS&#x60; object or update the existing object which will be used for all xAPI communications
+
+            Called by the &#x60;Cmi5&#x60; constructor when provided a launch URL.
+
+            @method setLRS
+            @param {String} endpoint LRS location
+            @param {String} auth Authentication token value
+        */
+        setLRS: function (endpoint, auth) {
+            this.log(&quot;setLRS: &quot;, endpoint, auth);
+            if (this._lrs !== null) {
+                if ((typeof auth === &quot;undefined&quot; &amp;&amp; endpoint === null) || endpoint !== null) {
+                    this._endpoint = this._lrs.endpoint = endpoint;
+                }
+                if (typeof auth !== &quot;undefined&quot; &amp;&amp; auth !== null) {
+                    this._lrs.auth = auth;
+                }
+            }
+            else {
+                this._lrs = new TinCan.LRS(
+                    {
+                        endpoint: endpoint,
+                        auth: auth,
+                        allowFail: false
+                    }
+                );
+            }
+        },
+
+        /**
+            Retrieve the &#x60;TinCan.LRS&#x60; object
+
+            @method getLRS
+            @return {TinCan.LRS} LRS object
+        */
+        getLRS: function () {
+            return this._lrs;
+        },
+
+        /**
+            Initialize the actor using a &#x60;TinCan.Agent&#x60; that will represent the learner
+
+            Called by the &#x60;Cmi5&#x60; constructor when provided a launch URL.
+
+            @method setActor
+            @param {String|TinCan.Agent} agent Pre-constructed Agent or string of JSON used to construct Agent
+            @throws {Error} &lt;ul&gt;&lt;li&gt;Invalid actor, missing account IFI&lt;/li&gt;&lt;li&gt;Invalid account IFI&lt;/li&gt;&lt;/ul&gt;
+        */
+        setActor: function (agent) {
+            if (! (agent instanceof TinCan.Agent)) {
+                agent = TinCan.Agent.fromJSON(agent);
+            }
+
+            //
+            // don&#x27;t generally want to do too much validation as the LMS
+            // should be giving us valid information, *but* in this case
+            // users need to be able to count on the type of object being
+            // returned
+            //
+            if ((agent.account === null) || (! (agent.account instanceof TinCan.AgentAccount))) {
+                throw new Error(&quot;Invalid actor: missing or invalid account&quot;);
+            }
+            else if (agent.account.name === null) {
+                throw new Error(&quot;Invalid actor: name is null&quot;);
+            }
+            else if (agent.account.name === &quot;&quot;) {
+                throw new Error(&quot;Invalid actor: name is empty&quot;);
+            }
+            else if (agent.account.homePage === null) {
+                throw new Error(&quot;Invalid actor: homePage is null&quot;);
+            }
+            else if (agent.account.homePage === &quot;&quot;) {
+                throw new Error(&quot;Invalid actor: homePage is empty&quot;);
+            }
+
+            this._actor = agent;
+        },
+
+        /**
+            Retrieve the &#x60;TinCan.Agent&#x60; object representing the learner
+
+            @method getActor
+            @return {TinCan.Agent} Learner&#x27;s Agent
+        */
+        getActor: function () {
+            return this._actor;
+        },
+
+        /**
+            Initialize the root object representing the AU
+
+            Called by the &#x60;Cmi5&#x60; constructor when provided a launch URL.
+
+            @method setActivity
+            @param {String|TinCan.Activity} activity Pre-constructed Activity or string id used to construct Activity
+            @throws {Error} &lt;ul&gt;&lt;li&gt;Invalid activity, null id&lt;/li&gt;&lt;li&gt;Invalid activity, empty string id&lt;/li&gt;&lt;/ul&gt;
+        */
+        setActivity: function (activity) {
+            if (! (activity instanceof TinCan.Activity)) {
+                activity = new TinCan.Activity(
+                    {
+                        id: activity
+                    }
+                );
+            }
+
+            if (activity.id === null) {
+                throw new Error(&quot;Invalid activity: id is null&quot;);
+            }
+            else if (activity.id === &quot;&quot;) {
+                throw new Error(&quot;Invalid activity: id is empty&quot;);
+            }
+
+            this._activity = activity;
+        },
+
+        /**
+            Retrieve the &#x60;TinCan.Activity&#x60; that is the root object representing the AU
+
+            @method getActivity
+            @return {TinCan.Activity} Root Activity
+        */
+        getActivity: function () {
+            return this._activity;
+        },
+
+        /**
+            Set the registration value
+
+            Called by the &#x60;Cmi5&#x60; constructor when provided a launch URL.
+
+            @method setRegistration
+            @param {String} registration UUID representing the registration
+            @throws {Error} &lt;ul&gt;&lt;li&gt;Invalid registration, null&lt;/li&gt;&lt;li&gt;Invalid registration, empty string&lt;/li&gt;&lt;/ul&gt;
+        */
+        setRegistration: function (registration) {
+            if (registration === null) {
+                throw new Error(&quot;Invalid registration: null&quot;);
+            }
+            else if (registration === &quot;&quot;) {
+                throw new Error(&quot;Invalid registration: empty&quot;);
+            }
+
+            this._registration = registration;
+        },
+
+        /**
+            Retrieve the registration associated with the session
+
+            @method getRegistration
+            @return {String} Registration
+        */
+        getRegistration: function () {
+            return this._registration;
+        },
+
+        /**
+            Validate a Score object&#x27;s properties
+
+            @method validateScore
+            @param {TinCan.Score|Object} score Score object to validate
+            @throws {Error} &lt;ul&gt;&lt;li&gt;Null or missing score argument&lt;/li&gt;&lt;li&gt;Non-integer min or max value (when provided)&lt;/li&gt;&lt;li&gt;Non-number, negative, or greater than 1 scaled value (when provided)&lt;/li&gt;&lt;li&gt;Non-integer, missing or invalid min/max, raw value (when provided)&lt;/li&gt;&lt;/ul&gt;
+            @return {Boolean} true for passing, otherwise exception is thrown
+        */
+        validateScore: function (score) {
+            if (typeof score === &quot;undefined&quot; || score === null) {
+                throw new Error(&quot;cannot validate score (score not provided): &quot; + score);
+            }
+
+            if (typeof score.min !== &quot;undefined&quot;) {
+                if (! isInteger(score.min)) {
+                    throw new Error(&quot;score.min is not an integer&quot;);
+                }
+            }
+            if (typeof score.max !== &quot;undefined&quot;) {
+                if (! isInteger(score.max)) {
+                    throw new Error(&quot;score.max is not an integer&quot;);
+                }
+            }
+
+            if (typeof score.scaled !== &quot;undefined&quot;) {
+                if (! /^(\-|\+)?[01]+(\.[0-9]+)?$/.test(score.scaled)) {
+                    throw new Error(&quot;scaled score not a recognized number: &quot; + score.scaled);
+                }
+
+                if (score.scaled &lt; 0) {
+                    throw new Error(&quot;scaled score must be greater than or equal to 0&quot;);
+                }
+                if (score.scaled &gt; 1) {
+                    throw new Error(&quot;scaled score must be less than or equal to 1&quot;);
+                }
+            }
+
+            if (typeof score.raw !== &quot;undefined&quot;) {
+                if (! isInteger(score.raw)) {
+                    throw new Error(&quot;score.raw is not an integer&quot;);
+                }
+                if (typeof score.min === &quot;undefined&quot;) {
+                    throw new Error(&quot;minimum score must be provided when including a raw score&quot;);
+                }
+                if (typeof score.max === &quot;undefined&quot;) {
+                    throw new Error(&quot;maximum score must be provided when including a raw score&quot;);
+                }
+                if (score.raw &lt; score.min) {
+                    throw new Error(&quot;raw score must be greater than or equal to minimum score&quot;);
+                }
+                if (score.raw &gt; score.max) {
+                    throw new Error(&quot;raw score must be less than or equal to maximum score&quot;);
+                }
+            }
+
+            return true;
+        },
+
+        /**
+            Prepare a cmi5 &quot;allowed&quot; statement including the actor, verb, object, and context
+
+            Used to construct a cmi5 &quot;allowed&quot; statement with all relevant information that can then be optionally added to prior to sending.
+
+            @method prepareStatement
+            @param {String} verbId Verb identifier combined with other cmi5 pre-determined information (must be IRI)
+            @return {TinCan.Statement} Statement
+        */
+        prepareStatement: function (verbId) {
+            //
+            // the specification allows for statements that are &#x27;cmi5 allowed&#x27;
+            // as oppposed to &#x27;cmi5 defined&#x27; to be sent by the AU, so give the
+            // AU the ability to get a prepared statement with a populated context
+            // based on the template but without the category having been added
+            //
+            var stCfg = {
+                    actor: this._actor,
+                    verb: {
+                        id: verbId
+                    },
+                    target: this._activity,
+                    context: this._prepareContext()
+                },
+                progress = this.getProgress();
+
+            if (typeof verbDisplay[verbId] !== &quot;undefined&quot;) {
+                stCfg.verb.display = verbDisplay[verbId];
+            }
+
+            if (verbId !== VERB_COMPLETED_ID &amp;&amp; progress !== null) {
+                stCfg.result = {
+                    extensions: {
+                        &quot;https://w3id.org/xapi/cmi5/result/extensions/progress&quot;: progress
+                    }
+                };
+            }
+
+            return new TinCan.Statement(stCfg);
+        },
+
+        /**
+            Store provided statement in the configured LRS
+
+            @method sendStatement
+            @param {TinCan.Statement} st Statement to be stored
+            @param {Function} [callback] Function to run on success/failure of statement save
+        */
+        sendStatement: function (st, callback) {
+            var cbWrapper,
+                result;
+
+            if (callback) {
+                cbWrapper = function (err, result) {
+                    if (err !== null) {
+                        callback(new Error(err), result);
+                        return;
+                    }
+
+                    callback(err, result, st);
+                };
+            }
+
+            result = this._lrs.saveStatement(
+                st,
+                {
+                    callback: cbWrapper
+                }
+            );
+            if (! callback) {
+                return {
+                    response: result,
+                    statement: st
+                };
+            }
+        },
+
+        /*
+         * The ...Statement methods are provided for users that want to implement
+         * a queueing like mechansim or something similar where they are expected
+         * to abide by the AU restrictions on what statements can be sent, etc. on
+         * their own.
+         *
+         * (Such as in SCORM Driver which was the impetus for adding them.)
+        */
+
+        /**
+            Advanced Usage: retrieve prepared &quot;initialized&quot; statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
+            @method initializedStatement
+            @return {TinCan.Statement} Initialized statement
+        */
+        initializedStatement: function () {
+            this.log(&quot;initializedStatement&quot;);
+            return this._prepareStatement(VERB_INITIALIZED_ID);
+        },
+
+        /**
+            Advanced Usage: retrieve prepared &quot;terminated&quot; statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
+            @method terminatedStatement
+            @return {TinCan.Statement} Terminated statement
+        */
+        terminatedStatement: function () {
+            this.log(&quot;terminatedStatement&quot;);
+            var st = this._prepareStatement(VERB_TERMINATED_ID);
+
+            st.result = st.result || new TinCan.Result();
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            return st;
+        },
+
+        /**
+            Advanced Usage: retrieve prepared &quot;passed&quot; statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
+            @method passedStatement
+            @param {Object} [score] Object to be used as the score, must meet masteryScore requirements, etc.
+            @return {TinCan.Statement} Passed statement
+        */
+        passedStatement: function (score) {
+            this.log(&quot;passedStatement&quot;);
+            var st = this._prepareStatement(VERB_PASSED_ID),
+                masteryScore;
+
+            st.result = st.result || new TinCan.Result();
+            st.result.success = true;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            if (score) {
+                try {
+                    this.validateScore(score);
+                }
+                catch (ex) {
+                    throw new Error(&quot;Invalid score - &quot; + ex);
+                }
+
+                masteryScore = this.getMasteryScore();
+                if (masteryScore !== null &amp;&amp; typeof score.scaled !== &quot;undefined&quot;) {
+                    if (score.scaled &lt; masteryScore) {
+                        throw new Error(&quot;Invalid score - scaled score does not meet or exceed mastery score (&quot; + score.scaled + &quot; &lt; &quot; + masteryScore + &quot;)&quot;);
+                    }
+
+                    st.context.extensions = st.context.extensions || {};
+                    st.context.extensions[EXTENSION_MASTERY_SCORE] = masteryScore;
+                }
+
+                st.result.score = new TinCan.Score(score);
+            }
+
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_MOVEON);
+
+            return st;
+        },
+
+        /**
+            Advanced Usage: retrieve prepared &quot;failed&quot; statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
+            @method failedStatement
+            @param {Object} [score] Object to be used as the score, must meet masteryScore requirements, etc.
+            @return {TinCan.Statement} Failed statement
+        */
+        failedStatement: function (score) {
+            this.log(&quot;failedStatement&quot;);
+            var st = this._prepareStatement(VERB_FAILED_ID),
+                masteryScore;
+
+            st.result = st.result || new TinCan.Result();
+            st.result.success = false;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            if (score) {
+                try {
+                    this.validateScore(score);
+                }
+                catch (ex) {
+                    throw new Error(&quot;Invalid score - &quot; + ex);
+                }
+
+                masteryScore = this.getMasteryScore();
+                if (masteryScore !== null &amp;&amp; typeof score.scaled !== &quot;undefined&quot;) {
+                    if (score.scaled &gt;= masteryScore) {
+                        throw new Error(&quot;Invalid score - scaled score exceeds mastery score (&quot; + score.scaled + &quot; &gt;= &quot; + masteryScore + &quot;)&quot;);
+                    }
+
+                    st.context.extensions = st.context.extensions || {};
+                    st.context.extensions[EXTENSION_MASTERY_SCORE] = masteryScore;
+                }
+
+                st.result.score = new TinCan.Score(score);
+            }
+
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_MOVEON);
+
+            return st;
+        },
+
+        /**
+            Advanced Usage: retrieve prepared &quot;completed&quot; statement
+
+            Statement methods are provided for users that want to implement
+            a queueing like mechansim or something similar where they are expected
+            to abide by the AU restrictions on what statements can be sent, etc. on
+            their own.
+
+            @method completedStatement
+            @return {TinCan.Statement} Completed statement
+        */
+        completedStatement: function () {
+            this.log(&quot;completedStatement&quot;);
+            var st = this._prepareStatement(VERB_COMPLETED_ID);
+
+            st.result = st.result || new TinCan.Result();
+            st.result.completion = true;
+            st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
+
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_MOVEON);
+
+            return st;
+        },
+
+        /**
+            @method _prepareContext
+            @private
+        */
+        _prepareContext: function () {
+            //
+            // deserializing a string version of the template is slower
+            // but gives us cheap cloning capability so that we don&#x27;t
+            // alter the template itself
+            //
+            var context = JSON.parse(this._contextTemplate);
+
+            context.registration = this._registration;
+
+            if (this._includeSourceActivity) {
+                context.contextActivities = context.contextActivities || new TinCan.ContextActivities();
+                context.contextActivities.other = context.contextActivities.other || [];
+                context.contextActivities.other.push(OTHER_ACTIVITY_CMI5JS);
+            }
+
+            return context;
+        },
+
+        /**
+            @method _prepareStatement
+            @private
+        */
+        _prepareStatement: function (verbId) {
+            //
+            // statements sent by this lib are &quot;cmi5 defined&quot; statements meaning
+            // they have the context category value added
+            //
+            var st = this.prepareStatement(verbId);
+
+            st.context.contextActivities = st.context.contextActivities || new TinCan.ContextActivities();
+            st.context.contextActivities.category = st.context.contextActivities.category || [];
+            st.context.contextActivities.category.push(CATEGORY_ACTIVITY_CMI5);
+
+            return st;
+        }
+    };
+
+    /**
+        Turn on debug logging
+
+        @method enableDebug
+        @static
+        @param {Boolean} [includeTinCan] Whether to enable debug logging from TinCanJS
+    */
+    Cmi5.enableDebug = function (includeTinCan) {
+        Cmi5.DEBUG = true;
+
+        if (includeTinCan) {
+            TinCan.enableDebug();
+        }
+    };
+
+    /**
+        Turn off debug logging
+
+        @method disableDebug
+        @static
+        @param {Boolean} [includeTinCan] Whether to disable debug logging from TinCanJS
+    */
+    Cmi5.disableDebug = function (includeTinCan) {
+        Cmi5.DEBUG = false;
+
+        if (includeTinCan) {
+            TinCan.disableDebug();
+        }
+    };
+
+    //
+    // Setup request callback
+    //
+    requestComplete = function (xhr, cfg, control, callback) {
+        this.log(&quot;requestComplete: &quot; + control.finished + &quot;, xhr.status: &quot; + xhr.status);
+        var requestCompleteResult,
+            notFoundOk,
+            httpStatus;
+
+        //
+        // XDomainRequest doesn&#x27;t give us a way to get the status,
+        // so allow passing in a forged one
+        //
+        if (typeof xhr.status === &quot;undefined&quot;) {
+            httpStatus = control.fakeStatus;
+        }
+        else {
+            //
+            // older versions of IE don&#x27;t properly handle 204 status codes
+            // so correct when receiving a 1223 to be 204 locally
+            // http://stackoverflow.com/questions/10046972/msie-returns-status-code-of-1223-for-ajax-request
+            //
+            httpStatus = (xhr.status === 1223) ? 204 : xhr.status;
+        }
+
+        if (! control.finished) {
+            // may be in sync or async mode, using XMLHttpRequest or IE XDomainRequest, onreadystatechange or
+            // onload or both might fire depending upon browser, just covering all bases with event hooks and
+            // using &#x27;finished&#x27; flag to avoid triggering events multiple times
+            control.finished = true;
+
+            notFoundOk = (cfg.ignore404 &amp;&amp; httpStatus === 404);
+            if ((httpStatus &gt;= 200 &amp;&amp; httpStatus &lt; 400) || notFoundOk) {
+                if (callback) {
+                    callback(null, xhr);
+                }
+                else {
+                    requestCompleteResult = {
+                        err: null,
+                        xhr: xhr
+                    };
+                    return requestCompleteResult;
+                }
+            }
+            else {
+                requestCompleteResult = {
+                    err: httpStatus,
+                    xhr: xhr
+                };
+                if (httpStatus === 0) {
+                    this.log(&quot;[warning] There was a problem communicating with the server. Aborted, offline, or invalid CORS endpoint (&quot; + httpStatus + &quot;)&quot;);
+                }
+                else {
+                    this.log(&quot;[warning] There was a problem communicating with the server. (&quot; + httpStatus + &quot; | &quot; + xhr.responseText + &quot;)&quot;);
+                }
+                if (callback) {
+                    callback(httpStatus, xhr);
+                }
+                return requestCompleteResult;
+            }
+        }
+        else {
+            return requestCompleteResult;
+        }
+    };
+
+    //
+    // one of the two of these is stuffed into the Cmi5 instance where a
+    // request is needed which is fetch at the moment
+    //
+    nativeRequest = function (fullUrl, cfg, callback) {
+        this.log(&quot;sendRequest using XMLHttpRequest&quot;);
+        var self = this,
+            xhr,
+            prop,
+            pairs = [],
+            data,
+            control = {
+                finished: false,
+                fakeStatus: null
+            },
+            async,
+            fullRequest = fullUrl;
+
+        this.log(&quot;sendRequest using XMLHttpRequest - async: &quot; + async);
+
+        cfg = cfg || {};
+        cfg.params = cfg.params || {};
+        cfg.headers = cfg.headers || {};
+
+        async = typeof callback !== &quot;undefined&quot;;
+
+        for (prop in cfg.params) {
+            if (cfg.params.hasOwnProperty(prop)) {
+                pairs.push(prop + &quot;=&quot; + encodeURIComponent(cfg.params[prop]));
+            }
+        }
+        if (pairs.length &gt; 0) {
+            fullRequest += &quot;?&quot; + pairs.join(&quot;&amp;&quot;);
+        }
+
+        xhr = new XMLHttpRequest();
+
+        xhr.open(cfg.method, fullRequest, async);
+        for (prop in cfg.headers) {
+            if (cfg.headers.hasOwnProperty(prop)) {
+                xhr.setRequestHeader(prop, cfg.headers[prop]);
+            }
+        }
+
+        if (typeof cfg.data !== &quot;undefined&quot;) {
+            cfg.data += &quot;&quot;;
+        }
+        data = cfg.data;
+
+        if (async) {
+            xhr.onreadystatechange = function () {
+                self.log(&quot;xhr.onreadystatechange - xhr.readyState: &quot; + xhr.readyState);
+                if (xhr.readyState === 4) {
+                    requestComplete.call(self, xhr, cfg, control, callback);
+                }
+            };
+        }
+
+        //
+        // research indicates that IE is known to just throw exceptions
+        // on .send and it seems everyone pretty much just ignores them
+        // including jQuery (https://github.com/jquery/jquery/blob/1.10.2/src/ajax.js#L549
+        // https://github.com/jquery/jquery/blob/1.10.2/src/ajax/xhr.js#L97)
+        //
+        try {
+            xhr.send(data);
+        }
+        catch (ex) {
+            this.log(&quot;sendRequest caught send exception: &quot; + ex);
+        }
+
+        if (async) {
+            return;
+        }
+
+        return requestComplete.call(this, xhr, cfg, control);
+    };
+    xdrRequest = function (fullUrl, cfg, callback) {
+        this.log(&quot;sendRequest using XDomainRequest&quot;);
+        var self = this,
+            xhr,
+            pairs = [],
+            data,
+            prop,
+            until,
+            control = {
+                finished: false,
+                fakeStatus: null
+            },
+            err;
+
+        cfg = cfg || {};
+        cfg.params = cfg.params || {};
+        cfg.headers = cfg.headers || {};
+
+        if (typeof cfg.headers[&quot;Content-Type&quot;] !== &quot;undefined&quot; &amp;&amp; cfg.headers[&quot;Content-Type&quot;] !== &quot;application/json&quot;) {
+            err = new Error(&quot;Unsupported content type for IE Mode request&quot;);
+            if (callback) {
+                callback(err, null);
+                return null;
+            }
+            return {
+                err: err,
+                xhr: null
+            };
+        }
+
+        for (prop in cfg.params) {
+            if (cfg.params.hasOwnProperty(prop)) {
+                pairs.push(prop + &quot;=&quot; + encodeURIComponent(cfg.params[prop]));
+            }
+        }
+
+        if (pairs.length &gt; 0) {
+            fullUrl += &quot;?&quot; + pairs.join(&quot;&amp;&quot;);
+        }
+
+        xhr = new XDomainRequest();
+        xhr.open(&quot;POST&quot;, fullUrl);
+
+        if (! callback) {
+            xhr.onload = function () {
+                control.fakeStatus = 200;
+            };
+            xhr.onerror = function () {
+                control.fakeStatus = 400;
+            };
+            xhr.ontimeout = function () {
+                control.fakeStatus = 0;
+            };
+        }
+        else {
+            xhr.onload = function () {
+                control.fakeStatus = 200;
+                requestComplete.call(self, xhr, cfg, control, callback);
+            };
+            xhr.onerror = function () {
+                control.fakeStatus = 400;
+                requestComplete.call(self, xhr, cfg, control, callback);
+            };
+            xhr.ontimeout = function () {
+                control.fakeStatus = 0;
+                requestComplete.call(self, xhr, cfg, control, callback);
+            };
+        }
+
+        //
+        // IE likes to randomly abort requests when some handlers
+        // aren&#x27;t defined, so define them with no-ops, see:
+        //
+        // http://cypressnorth.com/programming/internet-explorer-aborting-ajax-requests-fixed/
+        // http://social.msdn.microsoft.com/Forums/ie/en-US/30ef3add-767c-4436-b8a9-f1ca19b4812e/ie9-rtm-xdomainrequest-issued-requests-may-abort-if-all-event-handlers-not-specified
+        //
+        xhr.onprogress = function () {};
+        xhr.timeout = 0;
+
+        //
+        // research indicates that IE is known to just throw exceptions
+        // on .send and it seems everyone pretty much just ignores them
+        // including jQuery (https://github.com/jquery/jquery/blob/1.10.2/src/ajax.js#L549
+        // https://github.com/jquery/jquery/blob/1.10.2/src/ajax/xhr.js#L97)
+        //
+        try {
+            xhr.send(data);
+        }
+        catch (ex) {
+            this.log(&quot;sendRequest caught send exception: &quot; + ex);
+        }
+
+        if (! callback) {
+            // synchronous call in IE, with no synchronous mode available
+            until = 10000 + Date.now();
+            this.log(&quot;sendRequest - until: &quot; + until + &quot;, finished: &quot; + control.finished);
+
+            while (Date.now() &lt; until &amp;&amp; control.fakeStatus === null) {
+                __delay();
+            }
+            return requestComplete.call(self, xhr, cfg, control);
+        }
+
+        return;
+    };
+
+    /**
+        Non-environment safe method used to create a delay to give impression
+        of synchronous response (for IE, shocker)
+
+        @method __delay
+        @private
+    */
+    __delay = function () {
+        //
+        // use a synchronous request to the current location to allow the browser
+        // to yield to the asynchronous request&#x27;s events but still block in the
+        // outer loop to make it seem synchronous to the end user
+        //
+        // removing this made the while loop too tight to allow the asynchronous
+        // events through to get handled so that the response was correctly handled
+        //
+        var xhr = new XMLHttpRequest(),
+            url = window.location + &quot;?forcenocache=&quot; + TinCan.Utils.getUUID();
+
+        xhr.open(&quot;GET&quot;, url, false);
+        xhr.send(null);
+    };
+}());
+
+    </pre>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

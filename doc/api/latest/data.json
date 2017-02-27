@@ -1,0 +1,995 @@
+{
+    "project": {
+        "version": "1.0.0",
+        "name": "cmi5.js",
+        "description": "JavaScript implementation of cmi5 AU runtime",
+        "url": "http://rusticisoftware.github.io/cmi5.js/",
+        "logo": "https://cloud.githubusercontent.com/assets/1656316/9965238/bc9deb2c-5de9-11e5-9954-63aa03873f88.png"
+    },
+    "files": {
+        "src/cmi5.js": {
+            "name": "src/cmi5.js",
+            "modules": {
+                "Cmi5": 1
+            },
+            "classes": {
+                "Cmi5": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        }
+    },
+    "modules": {
+        "Cmi5": {
+            "name": "Cmi5",
+            "submodules": {},
+            "elements": {},
+            "classes": {
+                "Cmi5": 1
+            },
+            "fors": {},
+            "namespaces": {},
+            "tag": "module",
+            "file": "src/cmi5.js",
+            "line": 103,
+            "description": "cmi5.js AU runtime library"
+        }
+    },
+    "classes": {
+        "Cmi5": {
+            "name": "Cmi5",
+            "shortname": "Cmi5",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "Cmi5",
+            "namespace": "",
+            "file": "src/cmi5.js",
+            "line": 103,
+            "description": "Top level interface constructor.\n\nIt is highly recommended to use asynchronous calls to methods supporting a callback.",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "launchString",
+                    "description": "AU Launch URL providing configuration options",
+                    "type": "String",
+                    "optional": true
+                }
+            ],
+            "throws": {
+                "description": "Invalid launch string",
+                "type": "Error"
+            }
+        }
+    },
+    "elements": {},
+    "classitems": [
+        {
+            "file": "src/cmi5.js",
+            "line": 137,
+            "description": "Version of this library",
+            "itemtype": "property",
+            "name": "VERSION",
+            "static": 1,
+            "type": "String",
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 146,
+            "description": "Whether or not to enable debug logging",
+            "itemtype": "property",
+            "name": "DEBUG",
+            "static": 1,
+            "type": "Boolean",
+            "default": "false",
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 179,
+            "description": "Method to call to start the AU runtime\n\nThis is a simplified \"boot\" sequence for the AU that will call the individual parts of the start up sequence that would otherwise need to be called in order sequentially.",
+            "itemtype": "method",
+            "name": "start",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function"
+                },
+                {
+                    "name": "events",
+                    "description": "Functions to run at specific execution points",
+                    "type": "Object",
+                    "optional": true,
+                    "props": [
+                        {
+                            "name": "postFetch",
+                            "description": "Function to run after retrieving fetchUrl result",
+                            "type": "Function",
+                            "optional": true
+                        },
+                        {
+                            "name": "launchData",
+                            "description": "Function to run after retrieving launch data",
+                            "type": "Function",
+                            "optional": true
+                        },
+                        {
+                            "name": "learnerPrefs",
+                            "description": "Function to run after retrieving learner preferences",
+                            "type": "Function",
+                            "optional": true
+                        },
+                        {
+                            "name": "initializeStatement",
+                            "description": "Function to run after saving initialization statement",
+                            "type": "Function",
+                            "optional": true
+                        }
+                    ]
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 251,
+            "description": "Method to POST to the fetchUrl to retrieve the LRS credentials\n\n`setFetch` has to be called first and is called by the constructor if the launch string was provided to it.",
+            "itemtype": "method",
+            "name": "postFetch",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 346,
+            "description": "Method to load the LMS.LaunchData state document populated by the LMS\n\nFetch data has to have already been loaded, in order to have LRS credential.",
+            "itemtype": "method",
+            "name": "loadLMSLaunchData",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function"
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 399,
+            "description": "Method to load learner prefs agent profile document possibly populated by the LMS",
+            "itemtype": "method",
+            "name": "loadLearnerPrefs",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function"
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 451,
+            "description": "Method to save learner prefs to agent profile document in LRS",
+            "itemtype": "method",
+            "name": "saveLearnerPrefs",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 517,
+            "description": "Finalize initialization process by sending initialized statement, starting duration tracker, and marking AU active",
+            "itemtype": "method",
+            "name": "initialize",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>Learner prefs not loaded</li><li>AU already initialized</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 580,
+            "description": "Method to indicate session termination should occur, sends terminated statement, marks AU inactive",
+            "itemtype": "method",
+            "name": "terminate",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>AU not initialized</li><li>AU already terminated</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 643,
+            "description": "Method to indicate learner has completed the AU, sends completed statement",
+            "itemtype": "method",
+            "name": "completed",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already completed</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 718,
+            "description": "Method to indicate learner has passed the AU, sends passed statement with optional score",
+            "itemtype": "method",
+            "name": "passed",
+            "params": [
+                {
+                    "name": "score",
+                    "description": "Score to be included in statement (see `passedStatement`)",
+                    "type": "Object",
+                    "optional": true
+                },
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>AU not active,</li><li>AU not in normal launch mode,</li><li>AU already passed,</li><li>Failed to create passed statement (usually because of malformed score)</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 803,
+            "description": "Method to indicate learner has failed the AU, sends failed statement with optional score",
+            "itemtype": "method",
+            "name": "failed",
+            "params": [
+                {
+                    "name": "score",
+                    "description": "Score to be included in statement (see `failedStatement`)",
+                    "type": "Object",
+                    "optional": true
+                },
+                {
+                    "name": "callback",
+                    "description": "Function to call on error or success",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already passed/failed</li><li>Failed to create failed statement (usually because of malformed score)</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 888,
+            "description": "Method indicating whether the AU is currently active, has been initialized and not terminated",
+            "itemtype": "method",
+            "name": "isActive",
+            "return": {
+                "description": "Active flag",
+                "type": "Boolean"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 899,
+            "description": "Safe version of logging, only displays when .DEBUG is true, and console.log\nis available\n\nSee `console.log` for parameters.",
+            "itemtype": "method",
+            "name": "log",
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 916,
+            "description": "Switch on/off whether a source activity is included in statements by default\n\nDefault: on",
+            "itemtype": "method",
+            "name": "includeSourceActivity",
+            "params": [
+                {
+                    "name": "val",
+                    "description": "true is include, false is exclude",
+                    "type": "Boolean"
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 928,
+            "description": "Retrieve the launch method as provided in the LMS launch data",
+            "itemtype": "method",
+            "name": "getLaunchMethod",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "launch method",
+                "type": "String"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 944,
+            "description": "Retrieve the launch mode as provided in the LMS launch data",
+            "itemtype": "method",
+            "name": "getLaunchMode",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "launch mode",
+                "type": "String"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 960,
+            "description": "Retrieve the launch parameters when provided by the AU and in the launch data",
+            "itemtype": "method",
+            "name": "getLaunchParameters",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "launch parameters when exist or null",
+                "type": "String|null"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 982,
+            "description": "Retrieve the session id",
+            "itemtype": "method",
+            "name": "getSessionId",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "session id",
+                "type": "String"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 998,
+            "description": "Retrieve the moveOn value",
+            "itemtype": "method",
+            "name": "getMoveOn",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "moveOn value",
+                "type": "String"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1014,
+            "description": "Retrieve the mastery score as provided in LMS launch data",
+            "itemtype": "method",
+            "name": "getMasteryScore",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "mastery score or null",
+                "type": "String|null"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1036,
+            "description": "Retrieve the return URL as provided in LMS launch data",
+            "itemtype": "method",
+            "name": "getReturnUrl",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "mastery score or null",
+                "type": "String|null"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1058,
+            "description": "Retrieve the entitlement key as provided in LMS launch data",
+            "itemtype": "method",
+            "name": "getEntitlementKey",
+            "throws": {
+                "description": "LMS launch data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "entitlement key",
+                "type": "String|null"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1085,
+            "description": "Retrieve the language preference as provided in learner preferences",
+            "itemtype": "method",
+            "name": "getLanguagePreference",
+            "throws": {
+                "description": "Learner preference data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "language preference",
+                "type": "String|null"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1107,
+            "description": "Locally set the learner's language preference",
+            "itemtype": "method",
+            "name": "setLanguagePreference",
+            "params": [
+                {
+                    "name": "pref",
+                    "description": "language preference code (use `\"\"` to unset)",
+                    "type": "String"
+                }
+            ],
+            "throws": {
+                "description": "Learner preference data has not been loaded",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1130,
+            "description": "Retrieve the audio preference as provided in learner preferences",
+            "itemtype": "method",
+            "name": "getAudioPreference",
+            "throws": {
+                "description": "Learner preference data has not been loaded",
+                "type": "Error"
+            },
+            "return": {
+                "description": "audio preference",
+                "type": "String|null"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1152,
+            "description": "Locally set the learner's audio preference",
+            "itemtype": "method",
+            "name": "setAudioPreference",
+            "params": [
+                {
+                    "name": "pref",
+                    "description": "\"on\", \"off\", or `null`",
+                    "type": "String"
+                }
+            ],
+            "throws": {
+                "description": "Learner preference data has not been loaded",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1175,
+            "description": "Get the duration of this session so far",
+            "itemtype": "method",
+            "name": "getDuration",
+            "return": {
+                "description": "Number of milliseconds",
+                "type": "Number"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1187,
+            "description": "Locally set the progress towards completion",
+            "itemtype": "method",
+            "name": "setProgress",
+            "params": [
+                {
+                    "name": "progress",
+                    "description": "progress as a percentage between 0 and 100",
+                    "type": "Integer"
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>Not an integer</li><li>Less than zero or greater than 100</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1208,
+            "description": "Get progress",
+            "itemtype": "method",
+            "name": "getProgress",
+            "return": {
+                "description": "Integer value of locally set progress measure or null when not set",
+                "type": "Integer|null"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1219,
+            "description": "Set the fetch URL, called by the `Cmi5` constructor when provided a launch URL",
+            "itemtype": "method",
+            "name": "setFetch",
+            "params": [
+                {
+                    "name": "fetchURL",
+                    "description": "fetchURL as provided by the LMS in the launch string",
+                    "type": "String"
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1297,
+            "description": "Retrieve the fetch URL",
+            "itemtype": "method",
+            "name": "getFetch",
+            "return": {
+                "description": "the previous set fetch URL",
+                "type": "String"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1307,
+            "description": "Initialize the LRS to a `TinCan.LRS` object or update the existing object which will be used for all xAPI communications\n\nCalled by the `Cmi5` constructor when provided a launch URL.",
+            "itemtype": "method",
+            "name": "setLRS",
+            "params": [
+                {
+                    "name": "endpoint",
+                    "description": "LRS location",
+                    "type": "String"
+                },
+                {
+                    "name": "auth",
+                    "description": "Authentication token value",
+                    "type": "String"
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1337,
+            "description": "Retrieve the `TinCan.LRS` object",
+            "itemtype": "method",
+            "name": "getLRS",
+            "return": {
+                "description": "LRS object",
+                "type": "TinCan.LRS"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1347,
+            "description": "Initialize the actor using a `TinCan.Agent` that will represent the learner\n\nCalled by the `Cmi5` constructor when provided a launch URL.",
+            "itemtype": "method",
+            "name": "setActor",
+            "params": [
+                {
+                    "name": "agent",
+                    "description": "Pre-constructed Agent or string of JSON used to construct Agent",
+                    "type": "String|TinCan.Agent"
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>Invalid actor, missing account IFI</li><li>Invalid account IFI</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1386,
+            "description": "Retrieve the `TinCan.Agent` object representing the learner",
+            "itemtype": "method",
+            "name": "getActor",
+            "return": {
+                "description": "Learner's Agent",
+                "type": "TinCan.Agent"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1396,
+            "description": "Initialize the root object representing the AU\n\nCalled by the `Cmi5` constructor when provided a launch URL.",
+            "itemtype": "method",
+            "name": "setActivity",
+            "params": [
+                {
+                    "name": "activity",
+                    "description": "Pre-constructed Activity or string id used to construct Activity",
+                    "type": "String|TinCan.Activity"
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>Invalid activity, null id</li><li>Invalid activity, empty string id</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1424,
+            "description": "Retrieve the `TinCan.Activity` that is the root object representing the AU",
+            "itemtype": "method",
+            "name": "getActivity",
+            "return": {
+                "description": "Root Activity",
+                "type": "TinCan.Activity"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1434,
+            "description": "Set the registration value\n\nCalled by the `Cmi5` constructor when provided a launch URL.",
+            "itemtype": "method",
+            "name": "setRegistration",
+            "params": [
+                {
+                    "name": "registration",
+                    "description": "UUID representing the registration",
+                    "type": "String"
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>Invalid registration, null</li><li>Invalid registration, empty string</li></ul>",
+                "type": "Error"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1454,
+            "description": "Retrieve the registration associated with the session",
+            "itemtype": "method",
+            "name": "getRegistration",
+            "return": {
+                "description": "Registration",
+                "type": "String"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1464,
+            "description": "Validate a Score object's properties",
+            "itemtype": "method",
+            "name": "validateScore",
+            "params": [
+                {
+                    "name": "score",
+                    "description": "Score object to validate",
+                    "type": "TinCan.Score|Object"
+                }
+            ],
+            "throws": {
+                "description": "<ul><li>Null or missing score argument</li><li>Non-integer min or max value (when provided)</li><li>Non-number, negative, or greater than 1 scaled value (when provided)</li><li>Non-integer, missing or invalid min/max, raw value (when provided)</li></ul>",
+                "type": "Error"
+            },
+            "return": {
+                "description": "true for passing, otherwise exception is thrown",
+                "type": "Boolean"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1522,
+            "description": "Prepare a cmi5 \"allowed\" statement including the actor, verb, object, and context\n\nUsed to construct a cmi5 \"allowed\" statement with all relevant information that can then be optionally added to prior to sending.",
+            "itemtype": "method",
+            "name": "prepareStatement",
+            "params": [
+                {
+                    "name": "verbId",
+                    "description": "Verb identifier combined with other cmi5 pre-determined information (must be IRI)",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "Statement",
+                "type": "TinCan.Statement"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1563,
+            "description": "Store provided statement in the configured LRS",
+            "itemtype": "method",
+            "name": "sendStatement",
+            "params": [
+                {
+                    "name": "st",
+                    "description": "Statement to be stored",
+                    "type": "TinCan.Statement"
+                },
+                {
+                    "name": "callback",
+                    "description": "Function to run on success/failure of statement save",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1608,
+            "description": "Advanced Usage: retrieve prepared \"initialized\" statement\n\nStatement methods are provided for users that want to implement\na queueing like mechansim or something similar where they are expected\nto abide by the AU restrictions on what statements can be sent, etc. on\ntheir own.",
+            "itemtype": "method",
+            "name": "initializedStatement",
+            "return": {
+                "description": "Initialized statement",
+                "type": "TinCan.Statement"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1624,
+            "description": "Advanced Usage: retrieve prepared \"terminated\" statement\n\nStatement methods are provided for users that want to implement\na queueing like mechansim or something similar where they are expected\nto abide by the AU restrictions on what statements can be sent, etc. on\ntheir own.",
+            "itemtype": "method",
+            "name": "terminatedStatement",
+            "return": {
+                "description": "Terminated statement",
+                "type": "TinCan.Statement"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1645,
+            "description": "Advanced Usage: retrieve prepared \"passed\" statement\n\nStatement methods are provided for users that want to implement\na queueing like mechansim or something similar where they are expected\nto abide by the AU restrictions on what statements can be sent, etc. on\ntheir own.",
+            "itemtype": "method",
+            "name": "passedStatement",
+            "params": [
+                {
+                    "name": "score",
+                    "description": "Object to be used as the score, must meet masteryScore requirements, etc.",
+                    "type": "Object",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "Passed statement",
+                "type": "TinCan.Statement"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1692,
+            "description": "Advanced Usage: retrieve prepared \"failed\" statement\n\nStatement methods are provided for users that want to implement\na queueing like mechansim or something similar where they are expected\nto abide by the AU restrictions on what statements can be sent, etc. on\ntheir own.",
+            "itemtype": "method",
+            "name": "failedStatement",
+            "params": [
+                {
+                    "name": "score",
+                    "description": "Object to be used as the score, must meet masteryScore requirements, etc.",
+                    "type": "Object",
+                    "optional": true
+                }
+            ],
+            "return": {
+                "description": "Failed statement",
+                "type": "TinCan.Statement"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1739,
+            "description": "Advanced Usage: retrieve prepared \"completed\" statement\n\nStatement methods are provided for users that want to implement\na queueing like mechansim or something similar where they are expected\nto abide by the AU restrictions on what statements can be sent, etc. on\ntheir own.",
+            "itemtype": "method",
+            "name": "completedStatement",
+            "return": {
+                "description": "Completed statement",
+                "type": "TinCan.Statement"
+            },
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1763,
+            "itemtype": "method",
+            "name": "_prepareContext",
+            "access": "private",
+            "tagname": "",
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1786,
+            "itemtype": "method",
+            "name": "_prepareStatement",
+            "access": "private",
+            "tagname": "",
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1805,
+            "description": "Turn on debug logging",
+            "itemtype": "method",
+            "name": "enableDebug",
+            "static": 1,
+            "params": [
+                {
+                    "name": "includeTinCan",
+                    "description": "Whether to enable debug logging from TinCanJS",
+                    "type": "Boolean",
+                    "optional": true
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 1820,
+            "description": "Turn off debug logging",
+            "itemtype": "method",
+            "name": "disableDebug",
+            "static": 1,
+            "params": [
+                {
+                    "name": "includeTinCan",
+                    "description": "Whether to disable debug logging from TinCanJS",
+                    "type": "Boolean",
+                    "optional": true
+                }
+            ],
+            "class": "Cmi5",
+            "module": "Cmi5"
+        },
+        {
+            "file": "src/cmi5.js",
+            "line": 2084,
+            "description": "Non-environment safe method used to create a delay to give impression\nof synchronous response (for IE, shocker)",
+            "itemtype": "method",
+            "name": "__delay",
+            "access": "private",
+            "tagname": "",
+            "class": "Cmi5",
+            "module": "Cmi5"
+        }
+    ],
+    "warnings": []
+}
