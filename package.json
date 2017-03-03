@@ -1,6 +1,6 @@
 {
   "name": "cmi5.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A JavaScript library implementing the cmi5 specification for AUs during runtime.",
   "repository": "https://github.com/RusticiSoftware/cmi5.js",
   "license": "SEE LICENSE IN LICENSE.md",

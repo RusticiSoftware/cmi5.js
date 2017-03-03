@@ -1,0 +1,10 @@
+*.tgz
+src
+test
+vendor
+build/doc
+build/cmi5-min.js.map
+.travis.yml
+.eslintrc.json
+.gitmodules
+NEXT
