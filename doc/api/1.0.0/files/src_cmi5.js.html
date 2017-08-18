@@ -17,7 +17,7 @@
                 <h1><img src="https://cloud.githubusercontent.com/assets/1656316/9965238/bc9deb2c-5de9-11e5-9954-63aa03873f88.png" title="cmi5.js"></h1>
         </div>
         <div class="yui3-u-1-4 version">
-            <em>API Docs for: 2.0.0</em>
+            <em>API Docs for: 1.0.0</em>
         </div>
     </div>
     <div id="bd" class="yui3-g">
@@ -1119,20 +1119,20 @@ var Cmi5;
         /**
             Retrieve the return URL as provided in LMS launch data
 
-            @method getReturnURL
+            @method getReturnUrl
             @throws {Error} LMS launch data has not been loaded
             @return {String|null} mastery score or null
         */
-        getReturnURL: function () {
-            this.log(&quot;getReturnURL&quot;);
+        getReturnUrl: function () {
+            this.log(&quot;getReturnUrl&quot;);
             var result = null;
 
             if (this._lmsLaunchData === null) {
-                throw new Error(&quot;Can&#x27;t determine returnURL until LMS LaunchData has been loaded&quot;);
+                throw new Error(&quot;Can&#x27;t determine returnUrl until LMS LaunchData has been loaded&quot;);
             }
 
-            if (typeof this._lmsLaunchData.returnURL !== &quot;undefined&quot;) {
-                result = this._lmsLaunchData.returnURL;
+            if (typeof this._lmsLaunchData.returnUrl !== &quot;undefined&quot;) {
+                result = this._lmsLaunchData.returnUrl;
             }
 
             return result;

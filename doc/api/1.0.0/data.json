@@ -1,6 +1,6 @@
 {
     "project": {
-        "version": "2.0.0",
+        "version": "1.0.0",
         "name": "cmi5.js",
         "description": "JavaScript implementation of cmi5 AU runtime",
         "url": "http://rusticisoftware.github.io/cmi5.js/",
@@ -465,7 +465,7 @@
             "line": 1036,
             "description": "Retrieve the return URL as provided in LMS launch data",
             "itemtype": "method",
-            "name": "getReturnURL",
+            "name": "getReturnUrl",
             "throws": {
                 "description": "LMS launch data has not been loaded",
                 "type": "Error"
