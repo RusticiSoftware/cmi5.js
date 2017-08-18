@@ -1036,20 +1036,20 @@ var Cmi5;
         /**
             Retrieve the return URL as provided in LMS launch data
 
-            @method getReturnUrl
+            @method getReturnURL
             @throws {Error} LMS launch data has not been loaded
             @return {String|null} mastery score or null
         */
-        getReturnUrl: function () {
-            this.log("getReturnUrl");
+        getReturnURL: function () {
+            this.log("getReturnURL");
             var result = null;
 
             if (this._lmsLaunchData === null) {
-                throw new Error("Can't determine returnUrl until LMS LaunchData has been loaded");
+                throw new Error("Can't determine returnURL until LMS LaunchData has been loaded");
             }
 
-            if (typeof this._lmsLaunchData.returnUrl !== "undefined") {
-                result = this._lmsLaunchData.returnUrl;
+            if (typeof this._lmsLaunchData.returnURL !== "undefined") {
+                result = this._lmsLaunchData.returnURL;
             }
 
             return result;
