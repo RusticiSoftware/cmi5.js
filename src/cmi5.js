@@ -188,12 +188,14 @@ var Cmi5;
                 @param {Function} [events.launchData] Function to run after retrieving launch data
                 @param {Function} [events.learnerPrefs] Function to run after retrieving learner preferences
                 @param {Function} [events.initializeStatement] Function to run after saving initialization statement
+            @param {Boolean} breakBeforeInitializeStatement optional flag to indicate whether sending the 'initialized' statement should be included in this process. If param not included, the 'initialized' statement will be sent.
         */
-        start: function (callback, events) {
+        start: function (callback, events, breakBeforeInitializeStatement) {
             this.log("start");
             var self = this;
 
             events = events || {};
+            breakBeforeInitializeStatement = breakBeforeInitializeStatement || false;
 
             self.postFetch(
                 function (err) {
@@ -227,19 +229,23 @@ var Cmi5;
                                         return;
                                     }
 
-                                    self.initialize(
-                                        function (err) {
-                                            if (typeof events.initializeStatement !== "undefined") {
-                                                events.initializeStatement.apply(this, arguments);
-                                            }
-                                            if (err !== null) {
-                                                callback(new Error(prefix + " send initialized statement: " + err));
-                                                return;
-                                            }
+                                    if (! breakBeforeInitializeStatement) {
+                                        self.initialize(
+                                            function (err) {
+                                                if (typeof events.initializeStatement !== "undefined") {
+                                                    events.initializeStatement.apply(this, arguments);
+                                                }
+                                                if (err !== null) {
+                                                    callback(new Error(prefix + " send initialized statement: " + err));
+                                                    return;
+                                                }
 
-                                            callback(null);
-                                        }
-                                    );
+                                                callback(null);
+                                            }
+                                        );
+                                    }
+
+                                    callback(null);
                                 }
                             );
                         }
@@ -519,14 +525,17 @@ var Cmi5;
 
             @method initialize
             @param {Function} [callback] Function to call on error or success
+            @param {Object} [additionalProperties] Optional object containing Context and Result properties to append to the cmi5 statement.
             @throws {Error} <ul><li>Learner prefs not loaded</li><li>AU already initialized</li></ul>
         */
-        initialize: function (callback) {
+        initialize: function (callback, additionalProperties) {
             this.log("initialize");
             var st,
                 err,
                 callbackWrapper,
-                result;
+                result,
+                property,
+                additionalProperties = additionalProperties || {};
 
             if (this._learnerPrefs === null) {
                 err = new Error("Can't send initialized statement without successful loadLearnerPrefs");
@@ -551,6 +560,21 @@ var Cmi5;
             }
 
             st = this.initializedStatement();
+
+            if (typeof additionalProperties.context !== "undefined") {
+
+                if (typeof additionalProperties.context.objectActivityType !== "undefined") {
+                    st.context["objectActivityType"] = additionalProperties.context.objectActivityType;
+                }
+
+                if (typeof additionalProperties.context.extensions !== "undefined") {
+                    for (property in additionalProperties.context.extensions) {
+                        if (additionalProperties.context.extensions.hasOwnProperty(property)) {
+                            st.context.extensions[property] = additionalProperties.context.extensions[property];
+                        }
+                    }
+                }
+            }
 
             if (callback) {
                 callbackWrapper = function (err) {
@@ -582,14 +606,17 @@ var Cmi5;
 
             @method terminate
             @param {Function} [callback] Function to call on error or success
+            @param {Object} [additionalProperties] Optional object containing Context and Result properties to append to the cmi5 statement.
             @throws {Error} <ul><li>AU not initialized</li><li>AU already terminated</li></ul>
         */
-        terminate: function (callback) {
+        terminate: function (callback, additionalProperties) {
             this.log("terminate");
             var st,
                 err,
                 callbackWrapper,
-                result;
+                result,
+                property,
+                additionalProperties = additionalProperties || {};
 
             if (! this._initialized) {
                 this.log("terminate - not initialized");
@@ -616,6 +643,35 @@ var Cmi5;
             }
 
             st = this.terminatedStatement();
+
+            if (typeof additionalProperties.context !== "undefined") {
+
+                if (typeof additionalProperties.context.objectActivityType !== "undefined") {
+                    st.context["objectActivityType"] = additionalProperties.context.objectActivityType;
+                }
+
+                if (typeof additionalProperties.context.extensions !== "undefined") {
+                    for (property in additionalProperties.context.extensions) {
+                        if (additionalProperties.context.extensions.hasOwnProperty(property)) {
+                            st.context.extensions[property] = additionalProperties.context.extensions[property];
+                        }
+                    }
+                }
+            }
+
+            if (typeof additionalProperties.result !== "undefined") {
+
+                st.result = st.result || new TinCan.Result();
+                st.result.extensions = st.result.extensions || {};
+
+                if (typeof additionalProperties.result.extensions !== "undefined") {
+                    for (property in additionalProperties.result.extensions) {
+                        if (additionalProperties.result.extensions.hasOwnProperty(property)) {
+                            st.result.extensions[property] = additionalProperties.result.extensions[property];
+                        }
+                    }
+                }
+            }
 
             if (callback) {
                 callbackWrapper = function (err) {
@@ -645,14 +701,17 @@ var Cmi5;
 
             @method completed
             @param {Function} [callback] Function to call on error or success
+            @param {Object} [additionalProperties] Optional object containing Context and Result properties to append to the cmi5 statement.
             @throws {Error} <ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already completed</li></ul>
         */
-        completed: function (callback) {
+        completed: function (callback, additionalProperties) {
             this.log("completed");
             var st,
                 err,
                 callbackWrapper,
-                result;
+                result,
+                property,
+                additionalProperties = additionalProperties || {};
 
             if (! this.isActive()) {
                 this.log("completed - not active");
@@ -691,6 +750,35 @@ var Cmi5;
             }
 
             st = this.completedStatement();
+
+            if (typeof additionalProperties.context !== "undefined") {
+
+                if (typeof additionalProperties.context.objectActivityType !== "undefined") {
+                    st.context["objectActivityType"] = additionalProperties.context.objectActivityType;
+                }
+
+                if (typeof additionalProperties.context.extensions !== "undefined") {
+                    for (property in additionalProperties.context.extensions) {
+                        if (additionalProperties.context.extensions.hasOwnProperty(property)) {
+                            st.context.extensions[property] = additionalProperties.context.extensions[property];
+                        }
+                    }
+                }
+            }
+
+            if (typeof additionalProperties.result !== "undefined") {
+
+                st.result = st.result || new TinCan.Result();
+                st.result.extensions = st.result.extensions || {};
+
+                if (typeof additionalProperties.result.extensions !== "undefined") {
+                    for (property in additionalProperties.result.extensions) {
+                        if (additionalProperties.result.extensions.hasOwnProperty(property)) {
+                            st.result.extensions[property] = additionalProperties.result.extensions[property];
+                        }
+                    }
+                }
+            }
 
             if (callback) {
                 callbackWrapper = function (err) {
