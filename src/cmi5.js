@@ -188,14 +188,14 @@ var Cmi5;
                 @param {Function} [events.launchData] Function to run after retrieving launch data
                 @param {Function} [events.learnerPrefs] Function to run after retrieving learner preferences
                 @param {Function} [events.initializeStatement] Function to run after saving initialization statement
-            @param {Boolean} breakBeforeInitializeStatement optional flag to indicate whether sending the 'initialized' statement should be included in this process. If param not included, the 'initialized' statement will be sent.
+            @param {Object} [additionalProperties] Optional object param with properties to customize method behavior.
         */
-        start: function (callback, events, breakBeforeInitializeStatement) {
+        start: function (callback, events, additionalProperties) {
             this.log("start");
-            var self = this;
+            var self = this,
+                breakEarly = additionalProperties.breakBeforeInitializeStatement || false;
 
             events = events || {};
-            breakBeforeInitializeStatement = breakBeforeInitializeStatement || false;
 
             self.postFetch(
                 function (err) {
@@ -229,7 +229,7 @@ var Cmi5;
                                         return;
                                     }
 
-                                    if (! breakBeforeInitializeStatement) {
+                                    if (! breakEarly) {
                                         self.initialize(
                                             function (err) {
                                                 if (typeof events.initializeStatement !== "undefined") {
@@ -243,6 +243,8 @@ var Cmi5;
                                                 callback(null);
                                             }
                                         );
+
+                                        return;
                                     }
 
                                     callback(null);
@@ -525,7 +527,7 @@ var Cmi5;
 
             @method initialize
             @param {Function} [callback] Function to call on error or success
-            @param {Object} [additionalProperties] Optional object containing Context and Result properties to append to the cmi5 statement.
+            @param {Object} [additionalProperties] Optional object containing properties to append to the cmi5 statement.
             @throws {Error} <ul><li>Learner prefs not loaded</li><li>AU already initialized</li></ul>
         */
         initialize: function (callback, additionalProperties) {
@@ -562,17 +564,18 @@ var Cmi5;
             st = this.initializedStatement();
 
             if (typeof additionalProperties.context !== "undefined") {
-
-                if (typeof additionalProperties.context.objectActivityType !== "undefined") {
-                    st.context["objectActivityType"] = additionalProperties.context.objectActivityType;
-                }
-
                 if (typeof additionalProperties.context.extensions !== "undefined") {
                     for (property in additionalProperties.context.extensions) {
                         if (additionalProperties.context.extensions.hasOwnProperty(property)) {
                             st.context.extensions[property] = additionalProperties.context.extensions[property];
                         }
                     }
+                }
+            }
+
+            if (typeof additionalProperties.target !== "undefined") {
+                if (typeof additionalProperties.target.definition !== "undefined") {
+                    st.target.definition = additionalProperties.target.definition;
                 }
             }
 
@@ -606,7 +609,7 @@ var Cmi5;
 
             @method terminate
             @param {Function} [callback] Function to call on error or success
-            @param {Object} [additionalProperties] Optional object containing Context and Result properties to append to the cmi5 statement.
+            @param {Object} [additionalProperties] Optional object containing properties to append to the cmi5 statement.
             @throws {Error} <ul><li>AU not initialized</li><li>AU already terminated</li></ul>
         */
         terminate: function (callback, additionalProperties) {
@@ -645,11 +648,6 @@ var Cmi5;
             st = this.terminatedStatement();
 
             if (typeof additionalProperties.context !== "undefined") {
-
-                if (typeof additionalProperties.context.objectActivityType !== "undefined") {
-                    st.context["objectActivityType"] = additionalProperties.context.objectActivityType;
-                }
-
                 if (typeof additionalProperties.context.extensions !== "undefined") {
                     for (property in additionalProperties.context.extensions) {
                         if (additionalProperties.context.extensions.hasOwnProperty(property)) {
@@ -659,8 +657,13 @@ var Cmi5;
                 }
             }
 
-            if (typeof additionalProperties.result !== "undefined") {
+            if (typeof additionalProperties.target !== "undefined") {
+                if (typeof additionalProperties.target.definition !== "undefined") {
+                    st.target.definition = additionalProperties.target.definition;
+                }
+            }
 
+            if (typeof additionalProperties.result !== "undefined") {
                 st.result = st.result || new TinCan.Result();
                 st.result.extensions = st.result.extensions || {};
 
@@ -701,7 +704,7 @@ var Cmi5;
 
             @method completed
             @param {Function} [callback] Function to call on error or success
-            @param {Object} [additionalProperties] Optional object containing Context and Result properties to append to the cmi5 statement.
+            @param {Object} [additionalProperties] Optional object containing properties to append to the cmi5 statement.
             @throws {Error} <ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already completed</li></ul>
         */
         completed: function (callback, additionalProperties) {
@@ -752,11 +755,6 @@ var Cmi5;
             st = this.completedStatement();
 
             if (typeof additionalProperties.context !== "undefined") {
-
-                if (typeof additionalProperties.context.objectActivityType !== "undefined") {
-                    st.context["objectActivityType"] = additionalProperties.context.objectActivityType;
-                }
-
                 if (typeof additionalProperties.context.extensions !== "undefined") {
                     for (property in additionalProperties.context.extensions) {
                         if (additionalProperties.context.extensions.hasOwnProperty(property)) {
@@ -766,8 +764,13 @@ var Cmi5;
                 }
             }
 
-            if (typeof additionalProperties.result !== "undefined") {
+            if (typeof additionalProperties.target !== "undefined") {
+                if (typeof additionalProperties.target.definition !== "undefined") {
+                    st.target.definition = additionalProperties.target.definition;
+                }
+            }
 
+            if (typeof additionalProperties.result !== "undefined") {
                 st.result = st.result || new TinCan.Result();
                 st.result.extensions = st.result.extensions || {};
 
