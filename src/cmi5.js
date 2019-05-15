@@ -536,7 +536,6 @@ var Cmi5;
                 err,
                 callbackWrapper,
                 result,
-                property,
                 additionalProperties = additionalProperties || {};
 
             if (this._learnerPrefs === null) {
@@ -562,22 +561,7 @@ var Cmi5;
             }
 
             st = this.initializedStatement();
-
-            if (typeof additionalProperties.context !== "undefined") {
-                if (typeof additionalProperties.context.extensions !== "undefined") {
-                    for (property in additionalProperties.context.extensions) {
-                        if (additionalProperties.context.extensions.hasOwnProperty(property)) {
-                            st.context.extensions[property] = additionalProperties.context.extensions[property];
-                        }
-                    }
-                }
-            }
-
-            if (typeof additionalProperties.target !== "undefined") {
-                if (typeof additionalProperties.target.definition !== "undefined") {
-                    st.target.definition = additionalProperties.target.definition;
-                }
-            }
+            this._appendProvidedProperties(st, additionalProperties);
 
             if (callback) {
                 callbackWrapper = function (err) {
@@ -618,7 +602,6 @@ var Cmi5;
                 err,
                 callbackWrapper,
                 result,
-                property,
                 additionalProperties = additionalProperties || {};
 
             if (! this._initialized) {
@@ -646,35 +629,7 @@ var Cmi5;
             }
 
             st = this.terminatedStatement();
-
-            if (typeof additionalProperties.context !== "undefined") {
-                if (typeof additionalProperties.context.extensions !== "undefined") {
-                    for (property in additionalProperties.context.extensions) {
-                        if (additionalProperties.context.extensions.hasOwnProperty(property)) {
-                            st.context.extensions[property] = additionalProperties.context.extensions[property];
-                        }
-                    }
-                }
-            }
-
-            if (typeof additionalProperties.target !== "undefined") {
-                if (typeof additionalProperties.target.definition !== "undefined") {
-                    st.target.definition = additionalProperties.target.definition;
-                }
-            }
-
-            if (typeof additionalProperties.result !== "undefined") {
-                st.result = st.result || new TinCan.Result();
-                st.result.extensions = st.result.extensions || {};
-
-                if (typeof additionalProperties.result.extensions !== "undefined") {
-                    for (property in additionalProperties.result.extensions) {
-                        if (additionalProperties.result.extensions.hasOwnProperty(property)) {
-                            st.result.extensions[property] = additionalProperties.result.extensions[property];
-                        }
-                    }
-                }
-            }
+            this._appendProvidedProperties(st, additionalProperties);
 
             if (callback) {
                 callbackWrapper = function (err) {
@@ -713,7 +668,6 @@ var Cmi5;
                 err,
                 callbackWrapper,
                 result,
-                property,
                 additionalProperties = additionalProperties || {};
 
             if (! this.isActive()) {
@@ -753,35 +707,7 @@ var Cmi5;
             }
 
             st = this.completedStatement();
-
-            if (typeof additionalProperties.context !== "undefined") {
-                if (typeof additionalProperties.context.extensions !== "undefined") {
-                    for (property in additionalProperties.context.extensions) {
-                        if (additionalProperties.context.extensions.hasOwnProperty(property)) {
-                            st.context.extensions[property] = additionalProperties.context.extensions[property];
-                        }
-                    }
-                }
-            }
-
-            if (typeof additionalProperties.target !== "undefined") {
-                if (typeof additionalProperties.target.definition !== "undefined") {
-                    st.target.definition = additionalProperties.target.definition;
-                }
-            }
-
-            if (typeof additionalProperties.result !== "undefined") {
-                st.result = st.result || new TinCan.Result();
-                st.result.extensions = st.result.extensions || {};
-
-                if (typeof additionalProperties.result.extensions !== "undefined") {
-                    for (property in additionalProperties.result.extensions) {
-                        if (additionalProperties.result.extensions.hasOwnProperty(property)) {
-                            st.result.extensions[property] = additionalProperties.result.extensions[property];
-                        }
-                    }
-                }
-            }
+            this._appendProvidedProperties(st, additionalProperties);
 
             if (callback) {
                 callbackWrapper = function (err) {
@@ -1890,6 +1816,51 @@ var Cmi5;
             st.context.contextActivities.category.push(CATEGORY_ACTIVITY_CMI5);
 
             return st;
+        },
+
+        /**
+            @method _appendProvidedProperties
+            @private
+        */
+        _appendProvidedProperties: function (st, additionalProperties) {
+            //
+            // If any additional properties were provided to be added to the statement, do so here. This allows for
+            // xAPI profile extensibility
+            //
+            var property;
+
+            if (typeof additionalProperties.context !== "undefined") {
+                if (typeof additionalProperties.context.extensions !== "undefined") {
+                    for (property in additionalProperties.context.extensions) {
+                        if (additionalProperties.context.extensions.hasOwnProperty(property)) {
+                            st.context.extensions[property] = additionalProperties.context.extensions[property];
+                        }
+                    }
+                }
+            }
+
+            if (typeof additionalProperties.result !== "undefined") {
+                st.result = st.result || new TinCan.Result();
+                st.result.extensions = st.result.extensions || {};
+
+                if (typeof additionalProperties.result.extensions !== "undefined") {
+                    for (property in additionalProperties.result.extensions) {
+                        if (additionalProperties.result.extensions.hasOwnProperty(property)) {
+                            st.result.extensions[property] = additionalProperties.result.extensions[property];
+                        }
+                    }
+                }
+            }
+
+            if (typeof additionalProperties.target !== "undefined") {
+                if (typeof additionalProperties.target.definition !== "undefined") {
+                    st.target.definition = st.target.definition || new TinCan.ActivityDefinition();
+
+                    if (typeof additionalProperties.target.definition.type !== "undefined") {
+                        st.target.definition.type = additionalProperties.target.definition.type;
+                    }
+                }
+            }
         }
     };
 
