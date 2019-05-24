@@ -5,7 +5,8 @@
     "extends": "eslint:recommended",
     "globals": {
         "TinCan": true,
-        "URI": true
+        "URI": true,
+        "XDomainRequest": true
     },
     "rules": {
         "accessor-pairs": "error",

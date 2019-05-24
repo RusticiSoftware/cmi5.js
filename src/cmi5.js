@@ -1290,8 +1290,7 @@ var Cmi5;
                 || locationPort !== (
                     (urlParts[3] !== null && typeof urlParts[3] !== "undefined" && urlParts[3] !== "")
                         ? urlParts[3]
-                        : (urlParts[1] === "http:" ? "80" : (urlParts[1] === "https:" ? "443" : "")
-                    )
+                        : (urlParts[1] === "http:" ? "80" : (urlParts[1] === "https:" ? "443" : ""))
                 )
             );
             if (isXD) {
