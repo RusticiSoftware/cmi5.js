@@ -536,7 +536,7 @@ var Cmi5;
                 err,
                 callbackWrapper,
                 result,
-                additionalProperties = additionalProperties || {};
+                additionalProperties = additionalProperties || {}; // eslint-disable-line no-redeclare
 
             if (this._learnerPrefs === null) {
                 err = new Error("Can't send initialized statement without successful loadLearnerPrefs");
@@ -602,7 +602,7 @@ var Cmi5;
                 err,
                 callbackWrapper,
                 result,
-                additionalProperties = additionalProperties || {};
+                additionalProperties = additionalProperties || {}; // eslint-disable-line no-redeclare
 
             if (! this._initialized) {
                 this.log("terminate - not initialized");
@@ -668,7 +668,7 @@ var Cmi5;
                 err,
                 callbackWrapper,
                 result,
-                additionalProperties = additionalProperties || {};
+                additionalProperties = additionalProperties || {}; // eslint-disable-line no-redeclare
 
             if (! this.isActive()) {
                 this.log("completed - not active");
