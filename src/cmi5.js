@@ -15,7 +15,7 @@ cmi5.js AU runtime library
 
 @module Cmi5
 */
-var Cmi5;
+var Cmi5; // eslint-disable-line no-implicit-globals
 
 (function () {
     "use strict";
@@ -51,7 +51,7 @@ var Cmi5;
                         und: THIS_LIBRARY.NAME + " (" + THIS_LIBRARY.VERSION + ")"
                     },
                     description: {
-                        "en": THIS_LIBRARY.DESCRIPTION
+                        en: THIS_LIBRARY.DESCRIPTION
                     },
                     type: "http://id.tincanapi.com/activitytype/source"
                 }
@@ -80,10 +80,10 @@ var Cmi5;
     };
 
     verbDisplay[VERB_INITIALIZED_ID] = {
-        "en": "initialized"
+        en: "initialized"
     };
     verbDisplay[VERB_TERMINATED_ID] = {
-        "en": "terminated"
+        en: "terminated"
     };
 
     //
@@ -111,10 +111,11 @@ var Cmi5;
         @throws {Error} Invalid launch string
     */
     Cmi5 = function (launchString) {
-        this.log("constructor", launchString);
         var url,
             cfg,
             i;
+
+        this.log("constructor", launchString);
 
         if (typeof launchString !== "undefined") {
             url = new URI(launchString);
@@ -191,9 +192,10 @@ var Cmi5;
             @param {Object} [additionalProperties] Optional object param with properties to customize method behavior.
         */
         start: function (callback, events, additionalProperties) {
-            this.log("start");
             var self = this,
                 breakEarly = additionalProperties.breakBeforeInitializeStatement || false;
+
+            this.log("start");
 
             events = events || {};
 
@@ -206,6 +208,7 @@ var Cmi5;
                     }
                     if (err !== null) {
                         callback(new Error(prefix + " POST to fetch: " + err));
+
                         return;
                     }
 
@@ -216,6 +219,7 @@ var Cmi5;
                             }
                             if (err !== null) {
                                 callback(new Error(prefix + " load LMS LaunchData: " + err));
+
                                 return;
                             }
 
@@ -226,6 +230,7 @@ var Cmi5;
                                     }
                                     if (err !== null) {
                                         callback(new Error(prefix + " load learner preferences: " + err));
+
                                         return;
                                     }
 
@@ -237,6 +242,7 @@ var Cmi5;
                                                 }
                                                 if (err !== null) {
                                                     callback(new Error(prefix + " send initialized statement: " + err));
+
                                                     return;
                                                 }
 
@@ -265,23 +271,26 @@ var Cmi5;
             @param {Function} [callback] Function to call on error or success
         */
         postFetch: function (callback) {
-            this.log("postFetch");
             var self = this,
                 cbWrapper;
 
+            this.log("postFetch");
+
             if (this._fetch === null) {
                 callback(new Error("Can't POST to fetch URL without setFetch"));
+
                 return;
             }
 
             if (callback) {
                 cbWrapper = function (err, xhr) {
-                    self.log("postFetch::cbWrapper");
-                    self.log("postFetch::cbWrapper", err);
-                    self.log("postFetch::cbWrapper", xhr);
                     var parsed,
                         responseContent = xhr.responseText,
                         responseContentType;
+
+                    self.log("postFetch::cbWrapper");
+                    self.log("postFetch::cbWrapper", err);
+                    self.log("postFetch::cbWrapper", xhr);
 
                     if (err !== null) {
                         if (err === 0) {
@@ -317,6 +326,7 @@ var Cmi5;
                             err = xhr.responseText;
                         }
                         callback(new Error(err), xhr, parsed);
+
                         return;
                     }
 
@@ -326,12 +336,14 @@ var Cmi5;
                     catch (ex) {
                         self.log("postFetch::cbWrapper - failed to parse JSON response: " + ex);
                         callback(new Error("Post fetch response malformed: failed to parse JSON response (" + ex + ")"), xhr);
+
                         return;
                     }
 
                     if (parsed === null || typeof parsed !== "object" || typeof parsed["auth-token"] === "undefined") {
                         self.log("postFetch::cbWrapper - failed to access 'auth-token' property");
                         callback(new Error("Post fetch response malformed: failed to access 'auth-token' in (" + responseContent + ")"), xhr, parsed);
+
                         return;
                     }
 
@@ -360,11 +372,13 @@ var Cmi5;
             @param {Function} callback Function to call on error or success
         */
         loadLMSLaunchData: function (callback) {
-            this.log("loadLMSLaunchData");
             var self = this;
+
+            this.log("loadLMSLaunchData");
 
             if (this._fetchContent === null) {
                 callback(new Error("Can't retrieve LMS Launch Data without successful postFetch"));
+
                 return;
             }
 
@@ -377,6 +391,7 @@ var Cmi5;
                     callback: function (err, result) {
                         if (err !== null) {
                             callback(new Error("Failed to retrieve " + STATE_LMS_LAUNCHDATA + " State: " + err), result);
+
                             return;
                         }
 
@@ -387,6 +402,7 @@ var Cmi5;
                         //
                         if (result === null) {
                             callback(new Error(STATE_LMS_LAUNCHDATA + " State not found"), result);
+
                             return;
                         }
 
@@ -411,11 +427,13 @@ var Cmi5;
             @param {Function} callback Function to call on error or success
         */
         loadLearnerPrefs: function (callback) {
-            this.log("loadLearnerPrefs");
             var self = this;
+
+            this.log("loadLearnerPrefs");
 
             if (this._lmsLaunchData === null) {
                 callback(new Error("Can't retrieve Learner Preferences without successful loadLMSLaunchData"));
+
                 return;
             }
 
@@ -426,6 +444,7 @@ var Cmi5;
                     callback: function (err, result) {
                         if (err !== null) {
                             callback(new Error("Failed to retrieve " + AGENT_PROFILE_LEARNER_PREFS + " Agent Profile" + err), result);
+
                             return;
                         }
 
@@ -463,17 +482,20 @@ var Cmi5;
             @param {Function} [callback] Function to call on error or success
         */
         saveLearnerPrefs: function (callback) {
-            this.log("saveLearnerPrefs");
             var self = this,
                 result,
                 cbWrapper;
+
+            this.log("saveLearnerPrefs");
 
             if (this._learnerPrefs === null) {
                 result = new Error("Can't save Learner Preferences without first loading them");
                 if (callback) {
                     callback(result);
+
                     return;
                 }
+
                 return result;
             }
 
@@ -482,11 +504,12 @@ var Cmi5;
                     self.log("saveLearnerPrefs - saveAgentProfile callback", err, result);
                     if (err !== null) {
                         callback(new Error("Failed to save " + AGENT_PROFILE_LEARNER_PREFS + " Agent Profile: " + err), result);
+
                         return;
                     }
 
                     self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
-                        (typeof self._learnerPrefs.contents === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                        typeof self._learnerPrefs.contents === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType)
                             ? JSON.stringify(self._learnerPrefs.contents)
                             : self._learnerPrefs.contents
                     );
@@ -514,12 +537,10 @@ var Cmi5;
             }
 
             self._learnerPrefs.etag = TinCan.Utils.getSHA1String(
-                (typeof self._learnerPrefs.contents === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType))
+                typeof self._learnerPrefs.contents === "object" && TinCan.Utils.isApplicationJSON(self._learnerPrefs.contentType)
                     ? JSON.stringify(self._learnerPrefs.contents)
                     : self._learnerPrefs.contents
             );
-
-            return;
         },
 
         /**
@@ -531,17 +552,19 @@ var Cmi5;
             @throws {Error} <ul><li>Learner prefs not loaded</li><li>AU already initialized</li></ul>
         */
         initialize: function (callback, additionalProperties) {
-            this.log("initialize");
             var st,
                 err,
                 callbackWrapper,
                 result,
                 additionalProperties = additionalProperties || {}; // eslint-disable-line no-redeclare
 
+            this.log("initialize");
+
             if (this._learnerPrefs === null) {
                 err = new Error("Can't send initialized statement without successful loadLearnerPrefs");
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -554,6 +577,7 @@ var Cmi5;
                 err = new Error("AU already initialized");
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -597,12 +621,13 @@ var Cmi5;
             @throws {Error} <ul><li>AU not initialized</li><li>AU already terminated</li></ul>
         */
         terminate: function (callback, additionalProperties) {
-            this.log("terminate");
             var st,
                 err,
                 callbackWrapper,
                 result,
                 additionalProperties = additionalProperties || {}; // eslint-disable-line no-redeclare
+
+            this.log("terminate");
 
             if (! this._initialized) {
                 this.log("terminate - not initialized");
@@ -610,6 +635,7 @@ var Cmi5;
                 err = new Error("AU not initialized");
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -622,6 +648,7 @@ var Cmi5;
                 err = new Error("AU already terminated");
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -663,12 +690,13 @@ var Cmi5;
             @throws {Error} <ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already completed</li></ul>
         */
         completed: function (callback, additionalProperties) {
-            this.log("completed");
             var st,
                 err,
                 callbackWrapper,
                 result,
                 additionalProperties = additionalProperties || {}; // eslint-disable-line no-redeclare
+
+            this.log("completed");
 
             if (! this.isActive()) {
                 this.log("completed - not active");
@@ -676,6 +704,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -688,6 +717,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -700,6 +730,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -741,11 +772,12 @@ var Cmi5;
             @throws {Error} <ul><li>AU not active,</li><li>AU not in normal launch mode,</li><li>AU already passed,</li><li>Failed to create passed statement (usually because of malformed score)</li></ul>
         */
         passed: function (score, callback) {
-            this.log("passed");
             var st,
                 err,
                 callbackWrapper,
                 result;
+
+            this.log("passed");
 
             if (! this.isActive()) {
                 this.log("passed - not active");
@@ -753,6 +785,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -765,6 +798,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -777,6 +811,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -790,6 +825,7 @@ var Cmi5;
                 this.log("passed - failed to create passed statement: " + ex);
                 if (callback) {
                     callback("Failed to create passed statement - " + ex);
+
                     return;
                 }
 
@@ -826,11 +862,12 @@ var Cmi5;
             @throws {Error} <ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already passed/failed</li><li>Failed to create failed statement (usually because of malformed score)</li></ul>
         */
         failed: function (score, callback) {
-            this.log("failed");
             var st,
                 err,
                 callbackWrapper,
                 result;
+
+            this.log("failed");
 
             if (! this.isActive()) {
                 this.log("failed - not active");
@@ -838,6 +875,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -850,6 +888,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -862,6 +901,7 @@ var Cmi5;
 
                 if (callback) {
                     callback(err);
+
                     return;
                 }
 
@@ -875,6 +915,7 @@ var Cmi5;
                 this.log("failed - failed to create failed statement: " + ex);
                 if (callback) {
                     callback("Failed to create failed statement - " + ex);
+
                     return;
                 }
 
@@ -910,6 +951,7 @@ var Cmi5;
         */
         isActive: function () {
             this.log("isActive");
+
             return this._isActive;
         },
 
@@ -939,7 +981,7 @@ var Cmi5;
             @param {Boolean} val true is include, false is exclude
         */
         includeSourceActivity: function (val) {
-            this._includeSourceActivity = val ? true : false;
+            this._includeSourceActivity = !! val;
         },
 
         /**
@@ -982,8 +1024,9 @@ var Cmi5;
             @return {String|null} launch parameters when exist or null
         */
         getLaunchParameters: function () {
-            this.log("getLaunchParameters");
             var result = null;
+
+            this.log("getLaunchParameters");
 
             if (this._lmsLaunchData === null) {
                 throw new Error("Can't determine LaunchParameters until LMS LaunchData has been loaded");
@@ -1036,8 +1079,9 @@ var Cmi5;
             @return {String|null} mastery score or null
         */
         getMasteryScore: function () {
-            this.log("getMasteryScore");
             var result = null;
+
+            this.log("getMasteryScore");
 
             if (this._lmsLaunchData === null) {
                 throw new Error("Can't determine masteryScore until LMS LaunchData has been loaded");
@@ -1058,8 +1102,9 @@ var Cmi5;
             @return {String|null} mastery score or null
         */
         getReturnURL: function () {
-            this.log("getReturnURL");
             var result = null;
+
+            this.log("getReturnURL");
 
             if (this._lmsLaunchData === null) {
                 throw new Error("Can't determine returnURL until LMS LaunchData has been loaded");
@@ -1080,8 +1125,9 @@ var Cmi5;
             @return {String|null} entitlement key
         */
         getEntitlementKey: function () {
-            this.log("getEntitlementKey");
             var result = null;
+
+            this.log("getEntitlementKey");
 
             if (this._lmsLaunchData === null) {
                 throw new Error("Can't determine entitlementKey until LMS LaunchData has been loaded");
@@ -1107,8 +1153,9 @@ var Cmi5;
             @return {String|null} language preference
         */
         getLanguagePreference: function () {
-            this.log("getLanguagePreference");
             var result = null;
+
+            this.log("getLanguagePreference");
 
             if (this._learnerPrefs === null) {
                 throw new Error("Can't determine language preference until learner preferences have been loaded");
@@ -1140,8 +1187,6 @@ var Cmi5;
             }
 
             this._learnerPrefs.contents.languagePreference = pref;
-
-            return;
         },
 
         /**
@@ -1152,8 +1197,9 @@ var Cmi5;
             @return {String|null} audio preference
         */
         getAudioPreference: function () {
-            this.log("getAudioPreference");
             var result = null;
+
+            this.log("getAudioPreference");
 
             if (this._learnerPrefs === null) {
                 throw new Error("Can't determine audio preference until learner preferences have been loaded");
@@ -1185,8 +1231,6 @@ var Cmi5;
             }
 
             this._learnerPrefs.contents.audioPreference = pref;
-
-            return;
         },
 
         /**
@@ -1198,7 +1242,7 @@ var Cmi5;
         getDuration: function () {
             this.log("getDuration");
 
-            return (new Date().getTime() - this._durationStart);
+            return new Date().getTime() - this._durationStart;
         },
 
         /**
@@ -1230,6 +1274,7 @@ var Cmi5;
         */
         getProgress: function () {
             this.log("getProgress");
+
             return this._progress;
         },
 
@@ -1240,11 +1285,12 @@ var Cmi5;
             @param {String} fetchURL fetchURL as provided by the LMS in the launch string
         */
         setFetch: function (fetchURL) {
-            this.log("setFetch: ", fetchURL);
             var urlParts,
                 schemeMatches,
                 locationPort,
                 isXD;
+
+            this.log("setFetch: ", fetchURL);
 
             this._fetch = fetchURL;
 
@@ -1255,7 +1301,7 @@ var Cmi5;
 
             // TODO: swap this for uri.js
 
-            urlParts = fetchURL.toLowerCase().match(/([A-Za-z]+:)\/\/([^:\/]+):?(\d+)?(\/.*)?$/);
+            urlParts = fetchURL.toLowerCase().match(/([A-Za-z]+:)\/\/([^:/]+):?(\d+)?(\/.*)?$/);
             if (urlParts === null) {
                 throw new Error("URL invalid: failed to divide URL parts");
             }
@@ -1275,24 +1321,24 @@ var Cmi5;
             // but our endpoint may have provided it
             //
             if (locationPort === "") {
-                locationPort = (location.protocol.toLowerCase() === "http:" ? "80" : (location.protocol.toLowerCase() === "https:" ? "443" : ""));
+                locationPort = location.protocol.toLowerCase() === "http:" ? "80" : location.protocol.toLowerCase() === "https:" ? "443" : "";
             }
 
-            isXD = (
+            isXD
 
                 // is same scheme?
-                ! schemeMatches
+                = ! schemeMatches
 
                 // is same host?
                 || location.hostname.toLowerCase() !== urlParts[2]
 
                 // is same port?
                 || locationPort !== (
-                    (urlParts[3] !== null && typeof urlParts[3] !== "undefined" && urlParts[3] !== "")
+                    urlParts[3] !== null && typeof urlParts[3] !== "undefined" && urlParts[3] !== ""
                         ? urlParts[3]
-                        : (urlParts[1] === "http:" ? "80" : (urlParts[1] === "https:" ? "443" : ""))
+                        : urlParts[1] === "http:" ? "80" : urlParts[1] === "https:" ? "443" : ""
                 )
-            );
+            ;
             if (isXD) {
                 if (env.hasCORS) {
                     if (env.useXDR && schemeMatches) {
@@ -1380,7 +1426,7 @@ var Cmi5;
             // users need to be able to count on the type of object being
             // returned
             //
-            if ((agent.account === null) || (! (agent.account instanceof TinCan.AgentAccount))) {
+            if ((agent.account === null) || ! (agent.account instanceof TinCan.AgentAccount)) {
                 throw new Error("Invalid actor: missing or invalid account");
             }
             else if (agent.account.name === null) {
@@ -1502,7 +1548,7 @@ var Cmi5;
             }
 
             if (typeof score.scaled !== "undefined") {
-                if (! /^(\-|\+)?[01]+(\.[0-9]+)?$/.test(score.scaled)) {
+                if (! /^(-|\+)?[01]+(\.[0-9]+)?$/.test(score.scaled)) {
                     throw new Error("scaled score not a recognized number: " + score.scaled);
                 }
 
@@ -1591,6 +1637,7 @@ var Cmi5;
                 cbWrapper = function (err, result) {
                     if (err !== null) {
                         callback(new Error(err), result);
+
                         return;
                     }
 
@@ -1634,6 +1681,7 @@ var Cmi5;
         */
         initializedStatement: function () {
             this.log("initializedStatement");
+
             return this._prepareStatement(VERB_INITIALIZED_ID);
         },
 
@@ -1649,8 +1697,9 @@ var Cmi5;
             @return {TinCan.Statement} Terminated statement
         */
         terminatedStatement: function () {
-            this.log("terminatedStatement");
             var st = this._prepareStatement(VERB_TERMINATED_ID);
+
+            this.log("terminatedStatement");
 
             st.result = st.result || new TinCan.Result();
             st.result.duration = TinCan.Utils.convertMillisecondsToISO8601Duration(this.getDuration());
@@ -1671,9 +1720,10 @@ var Cmi5;
             @return {TinCan.Statement} Passed statement
         */
         passedStatement: function (score) {
-            this.log("passedStatement");
             var st = this._prepareStatement(VERB_PASSED_ID),
                 masteryScore;
+
+            this.log("passedStatement");
 
             st.result = st.result || new TinCan.Result();
             st.result.success = true;
@@ -1718,9 +1768,10 @@ var Cmi5;
             @return {TinCan.Statement} Failed statement
         */
         failedStatement: function (score) {
-            this.log("failedStatement");
             var st = this._prepareStatement(VERB_FAILED_ID),
                 masteryScore;
+
+            this.log("failedStatement");
 
             st.result = st.result || new TinCan.Result();
             st.result.success = false;
@@ -1764,8 +1815,9 @@ var Cmi5;
             @return {TinCan.Statement} Completed statement
         */
         completedStatement: function () {
-            this.log("completedStatement");
             var st = this._prepareStatement(VERB_COMPLETED_ID);
+
+            this.log("completedStatement");
 
             st.result = st.result || new TinCan.Result();
             st.result.completion = true;
@@ -1897,10 +1949,11 @@ var Cmi5;
     // Setup request callback
     //
     requestComplete = function (xhr, cfg, control, callback) {
-        this.log("requestComplete: " + control.finished + ", xhr.status: " + xhr.status);
         var requestCompleteResult,
             notFoundOk,
             httpStatus;
+
+        this.log("requestComplete: " + control.finished + ", xhr.status: " + xhr.status);
 
         //
         // XDomainRequest doesn't give us a way to get the status,
@@ -1915,7 +1968,7 @@ var Cmi5;
             // so correct when receiving a 1223 to be 204 locally
             // http://stackoverflow.com/questions/10046972/msie-returns-status-code-of-1223-for-ajax-request
             //
-            httpStatus = (xhr.status === 1223) ? 204 : xhr.status;
+            httpStatus = xhr.status === 1223 ? 204 : xhr.status;
         }
 
         if (! control.finished) {
@@ -1924,7 +1977,7 @@ var Cmi5;
             // using 'finished' flag to avoid triggering events multiple times
             control.finished = true;
 
-            notFoundOk = (cfg.ignore404 && httpStatus === 404);
+            notFoundOk = cfg.ignore404 && httpStatus === 404;
             if ((httpStatus >= 200 && httpStatus < 400) || notFoundOk) {
                 if (callback) {
                     callback(null, xhr);
@@ -1934,6 +1987,7 @@ var Cmi5;
                         err: null,
                         xhr: xhr
                     };
+
                     return requestCompleteResult;
                 }
             }
@@ -1951,6 +2005,7 @@ var Cmi5;
                 if (callback) {
                     callback(httpStatus, xhr);
                 }
+
                 return requestCompleteResult;
             }
         }
@@ -1964,7 +2019,6 @@ var Cmi5;
     // request is needed which is fetch at the moment
     //
     nativeRequest = function (fullUrl, cfg, callback) {
-        this.log("sendRequest using XMLHttpRequest");
         var self = this,
             xhr,
             prop,
@@ -2037,7 +2091,6 @@ var Cmi5;
         return requestComplete.call(this, xhr, cfg, control);
     };
     xdrRequest = function (fullUrl, cfg, callback) {
-        this.log("sendRequest using XDomainRequest");
         var self = this,
             xhr,
             pairs = [],
@@ -2050,6 +2103,8 @@ var Cmi5;
             },
             err;
 
+        this.log("sendRequest using XDomainRequest");
+
         cfg = cfg || {};
         cfg.params = cfg.params || {};
         cfg.headers = cfg.headers || {};
@@ -2058,8 +2113,10 @@ var Cmi5;
             err = new Error("Unsupported content type for IE Mode request");
             if (callback) {
                 callback(err, null);
+
                 return null;
             }
+
             return {
                 err: err,
                 xhr: null
@@ -2112,7 +2169,7 @@ var Cmi5;
         // http://cypressnorth.com/programming/internet-explorer-aborting-ajax-requests-fixed/
         // http://social.msdn.microsoft.com/Forums/ie/en-US/30ef3add-767c-4436-b8a9-f1ca19b4812e/ie9-rtm-xdomainrequest-issued-requests-may-abort-if-all-event-handlers-not-specified
         //
-        xhr.onprogress = function () {};
+        xhr.onprogress = function () {}; // eslint-disable-line no-empty-function
         xhr.timeout = 0;
 
         //
@@ -2136,10 +2193,9 @@ var Cmi5;
             while (Date.now() < until && control.fakeStatus === null) {
                 __delay();
             }
+
             return requestComplete.call(self, xhr, cfg, control);
         }
-
-        return;
     };
 
     /**
