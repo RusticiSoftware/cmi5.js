@@ -27,7 +27,7 @@ The library uses Grunt for building. Install Node.js which includes `npm`. If yo
 
 Then from the root of the repository run:
 
-    npm install (or yarn install)
+    npm ci
     grunt
 
 This will create `build/cmi5.js` and `build/cmi5-min.js`
