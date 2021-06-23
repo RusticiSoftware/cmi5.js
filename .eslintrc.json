@@ -1,17 +1,21 @@
 {
     "env": {
-        "browser": true
+        "browser": true,
+        "es2020": true
+    },
+    "parserOptions": {
+        "sourceType": "module"
     },
     "extends": "eslint-config-rusticisoftware",
-    "globals": {
-        "TinCan": true,
-        "URI": true,
-        "XDomainRequest": true
-    },
     "rules": {
-        "no-var": "off",
-        "no-invalid-this": "off",
-        "no-param-reassign": "off",
-        "no-magic-numbers": "off"
+        "no-magic-numbers": "off",
+        "one-var": [
+            "error",
+            {
+                "var": "always",
+                "let": "consecutive",
+                "const": "consecutive"
+            }
+        ]
     }
 }

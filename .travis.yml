@@ -3,5 +3,4 @@ language: node_js
 node_js:
   - "node"
   - "lts/*"
-before_install: npm install -g grunt-cli
-script: grunt
+script: webpack

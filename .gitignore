@@ -1,5 +1,5 @@
 # buildables
-build/
+dist/
 
 # 3rd party
 node_modules/

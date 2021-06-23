@@ -1,3 +1,0 @@
-[submodule "vendor/URI.js"]
-	path = vendor/URI.js
-	url = https://github.com/RusticiSoftware/URI.js.git

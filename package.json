@@ -1,9 +1,9 @@
 {
-  "name": "cmi5.js",
-  "version": "2.1.0",
+  "name": "@rusticisoftware/cmi5",
+  "version": "3.0.0",
   "description": "A JavaScript library implementing the cmi5 specification for AUs during runtime.",
   "repository": "https://github.com/RusticiSoftware/cmi5.js",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "Apache-2.0",
   "keywords": [
     "cmi5",
     "xapi",
@@ -16,18 +16,17 @@
       "email": "brian.miller@rusticisoftware.com"
     }
   ],
-  "devDependencies": {
-    "eslint-config-rusticisoftware": "^1.0.0",
-    "grunt": "^1.0.4",
-    "grunt-contrib-clean": "^2.0.0",
-    "grunt-contrib-concat": "1.0.1",
-    "grunt-contrib-uglify": "^4.0.1",
-    "grunt-contrib-watch": "^1.1.0",
-    "grunt-contrib-yuidoc": "1.0.0",
-    "grunt-eslint": "^21.0.0",
-    "grunt-file-exists": "0.1.4"
+  "main": "dist/cmi5.js",
+  "scripts": {
+    "build": "webpack"
   },
-  "dependencies": {
-    "tincanjs": "^0.50.0"
-  }
+  "devDependencies": {
+    "eslint": "^7.30.0",
+    "eslint-config-rusticisoftware": "^1.0.0",
+    "eslint-webpack-plugin": "^2.5.4",
+    "string-replace-loader": "^3.0.3",
+    "webpack": "^5.42.1",
+    "webpack-cli": "^4.7.2"
+  },
+  "dependencies": {}
 }
