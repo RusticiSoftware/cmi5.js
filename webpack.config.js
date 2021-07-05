@@ -9,6 +9,8 @@ module.exports = {
         path: path.resolve(__dirname, "dist"),
         filename: "cmi5.js",
         library: {
+            export: "default",
+            name: "Cmi5",
             type: "umd"
         }
     },
