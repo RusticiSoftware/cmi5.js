@@ -1344,9 +1344,50 @@ Cmi5.prototype = {
         }
     },
 
+    /**
+        Store provided statements in the configured LRS
+
+        @method sendStatements
+        @param {Array} sts Statements to be stored
+     */
+    sendStatements: async function (sts) {
+        this.log("sendStatements", sts);
+
+        sts.forEach((st) => {
+            if (typeof st.id === "undefined") {
+                st.id = Cmi5.uuidv4();
+            }
+        });
+
+        let response;
+
+        try {
+            response = await fetch(
+                `${this._endpoint}/statements`,
+                {
+                    mode: "cors",
+                    method: "post",
+                    headers: {
+                        "X-Experience-API-Version": XAPI_VERSION,
+                        Authorization: this._auth,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(sts)
+                }
+            );
+        }
+        catch (ex) {
+            throw new Error(`Failed request to send statements: ${ex}`);
+        }
+
+        if (response.status !== 204) {
+            throw new Error(`Failed to send statements: status code ${response.status}`);
+        }
+    },
+
     /*
      * The ...Statement methods are provided for users that want to implement
-     * a queueing like mechansim or something similar where they are expected
+     * a queueing like mechanism or something similar where they are expected
      * to abide by the AU restrictions on what statements can be sent, etc. on
      * their own.
     */
@@ -1355,7 +1396,7 @@ Cmi5.prototype = {
         Advanced Usage: retrieve prepared "initialized" statement
 
         Statement methods are provided for users that want to implement
-        a queueing like mechansim or something similar where they are expected
+        a queueing like mechanism or something similar where they are expected
         to abide by the AU restrictions on what statements can be sent, etc. on
         their own.
 
@@ -1372,7 +1413,7 @@ Cmi5.prototype = {
         Advanced Usage: retrieve prepared "terminated" statement
 
         Statement methods are provided for users that want to implement
-        a queueing like mechansim or something similar where they are expected
+        a queueing like mechanism or something similar where they are expected
         to abide by the AU restrictions on what statements can be sent, etc. on
         their own.
 
@@ -1394,7 +1435,7 @@ Cmi5.prototype = {
         Advanced Usage: retrieve prepared "passed" statement
 
         Statement methods are provided for users that want to implement
-        a queueing like mechansim or something similar where they are expected
+        a queueing like mechanism or something similar where they are expected
         to abide by the AU restrictions on what statements can be sent, etc. on
         their own.
 
@@ -1442,7 +1483,7 @@ Cmi5.prototype = {
         Advanced Usage: retrieve prepared "failed" statement
 
         Statement methods are provided for users that want to implement
-        a queueing like mechansim or something similar where they are expected
+        a queueing like mechanism or something similar where they are expected
         to abide by the AU restrictions on what statements can be sent, etc. on
         their own.
 
@@ -1490,7 +1531,7 @@ Cmi5.prototype = {
         Advanced Usage: retrieve prepared "completed" statement
 
         Statement methods are provided for users that want to implement
-        a queueing like mechansim or something similar where they are expected
+        a queueing like mechanism or something similar where they are expected
         to abide by the AU restrictions on what statements can be sent, etc. on
         their own.
 
