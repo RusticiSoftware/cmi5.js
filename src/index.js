@@ -1380,7 +1380,7 @@ Cmi5.prototype = {
             throw new Error(`Failed request to send statements: ${ex}`);
         }
 
-        if (response.status !== 204) {
+        if (response.status !== 200) {
             throw new Error(`Failed to send statements: status code ${response.status}`);
         }
     },
