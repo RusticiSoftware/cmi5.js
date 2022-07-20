@@ -1020,7 +1020,6 @@ Cmi5.prototype = {
     setEndpoint: function (endpoint) {
         this.log("setEndpoint: ", endpoint);
 
-        this._endpoint = endpoint;
         // Remove trailing slashes, as this library forms URLs with leading slashes in subpaths.
         this._endpoint = this._endpoint.replace(/\/+$/, "");
     },
