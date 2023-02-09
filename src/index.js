@@ -263,6 +263,7 @@ Cmi5.prototype = {
             @param {Function} [events.learnerPrefs] Function to run after retrieving learner preferences
             @param {Function} [events.initializeStatement] Function to run after saving initialization statement
         @param {Object} [additionalProperties] Optional object param with properties to customize method behavior.
+        @return {Promise}
     */
     start: async function (events = {}, additionalProperties) {
         this.log("start");
@@ -303,6 +304,7 @@ Cmi5.prototype = {
         `setFetch` has to be called first and is called by the constructor if the launch string was provided to it.
 
         @method postFetch
+        @return {Promise}
     */
     postFetch: async function () {
         this.log("postFetch");
@@ -352,6 +354,7 @@ Cmi5.prototype = {
         Fetch data has to have already been loaded, in order to have LRS credential.
 
         @method loadLMSLaunchData
+        @return {Promise}
     */
     loadLMSLaunchData: async function () {
         this.log("loadLMSLaunchData");
@@ -399,6 +402,7 @@ Cmi5.prototype = {
         Method to load learner prefs agent profile document possibly populated by the LMS
 
         @method loadLearnerPrefs
+        @return {Promise}
     */
     loadLearnerPrefs: async function () {
         this.log("loadLearnerPrefs");
@@ -456,6 +460,7 @@ Cmi5.prototype = {
         Method to save learner prefs to agent profile document in LRS
 
         @method saveLearnerPrefs
+        @return {Promise}
     */
     saveLearnerPrefs: async function () {
         this.log("saveLearnerPrefs");
@@ -511,6 +516,7 @@ Cmi5.prototype = {
         @method initialize
         @param {Object} [additionalProperties] Optional object containing properties to append to the cmi5 statement.
         @throws {Error} <ul><li>Learner prefs not loaded</li><li>AU already initialized</li></ul>
+        @return {Promise<statement>} A promise that contains the statement object that was stored
     */
     initialize: async function (additionalProperties = {}) {
         this.log("initialize");
@@ -540,6 +546,8 @@ Cmi5.prototype = {
         this._initialized = true;
         this._isActive = true;
         this._durationStart = new Date().getTime();
+
+        return st;
     },
 
     /**
@@ -548,6 +556,7 @@ Cmi5.prototype = {
         @method terminate
         @param {Object} [additionalProperties] Optional object containing properties to append to the cmi5 statement.
         @throws {Error} <ul><li>AU not initialized</li><li>AU already terminated</li></ul>
+        @return {Promise<statement>} A promise that contains the statement object that was stored
     */
     terminate: async function (additionalProperties = {}) {
         this.log("terminate");
@@ -572,6 +581,8 @@ Cmi5.prototype = {
 
         this._terminated = true;
         this._isActive = false;
+
+        return st;
     },
 
     /**
@@ -580,6 +591,7 @@ Cmi5.prototype = {
         @method completed
         @param {Object} [additionalProperties] Optional object containing properties to append to the cmi5 statement.
         @throws {Error} <ul><li>AU not active</li><li>AU not in normal launch mode</li><li>AU already completed</li></ul>
+        @return {Promise<statement>} A promise that contains the statement object that was stored
     */
     completed: async function (additionalProperties = {}) {
         this.log("completed");
@@ -607,6 +619,8 @@ Cmi5.prototype = {
 
         this.setProgress(null);
         this._completed = true;
+
+        return st;
     },
 
     /**
@@ -615,6 +629,7 @@ Cmi5.prototype = {
         @method passed
         @param {Object} [score] Score to be included in statement (see `passedStatement`)
         @throws {Error} <ul><li>AU not active,</li><li>AU not in Normal launch mode,</li><li>AU already passed,</li><li>Failed to create passed statement (usually because of malformed score)</li></ul>
+        @return {Promise<statement>} A promise that contains the statement object that was stored
     */
     passed: async function (score) {
         this.log("passed");
@@ -646,6 +661,8 @@ Cmi5.prototype = {
         }
 
         this._passed = true;
+
+        return st;
     },
 
     /**
@@ -654,6 +671,7 @@ Cmi5.prototype = {
         @method failed
         @param {Object} [score] Score to be included in statement (see `failedStatement`)
         @throws {Error} <ul><li>AU not active</li><li>AU not in Normal launch mode</li><li>AU already passed/failed</li><li>Failed to create failed statement (usually because of malformed score)</li></ul>
+        @return {Promise<statement>} A promise that contains the statement object that was stored
     */
     failed: async function (score) {
         this.log("failed");
@@ -685,6 +703,8 @@ Cmi5.prototype = {
         }
 
         this._failed = true;
+
+        return st;
     },
 
     /**
@@ -1308,6 +1328,7 @@ Cmi5.prototype = {
 
         @method sendStatement
         @param {Object} st Statement to be stored
+        @return {Promise}
     */
     sendStatement: async function (st) {
         this.log("sendStatement", st);
@@ -1351,6 +1372,7 @@ Cmi5.prototype = {
 
         @method sendStatements
         @param {Array} sts Statements to be stored
+        @return {Promise}
      */
     sendStatements: async function (sts) {
         this.log("sendStatements", sts);
