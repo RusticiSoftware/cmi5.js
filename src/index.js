@@ -434,7 +434,7 @@ Cmi5.prototype = {
         if (response.status === 200) {
             this._learnerPrefs = {
                 contents: await response.json(),
-                etag: response.headers.ETag
+                etag: response.headers.get("ETag")
             };
 
             return;
@@ -502,7 +502,7 @@ Cmi5.prototype = {
             throw new Error(`Failed to save learner preferences: ${response.status}`);
         }
 
-        this._learnerPrefs.etag = response.headers.ETag;
+        this._learnerPrefs.etag = response.headers.get("ETag");
     },
 
     /**
