@@ -6,7 +6,7 @@
     "parserOptions": {
         "sourceType": "module"
     },
-    "extends": "eslint-config-rusticisoftware",
+    "extends": "@rusticisoftware/eslint-config",
     "rules": {
         "no-magic-numbers": "off",
         "one-var": [
