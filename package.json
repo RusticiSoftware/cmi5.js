@@ -1,6 +1,6 @@
 {
   "name": "@rusticisoftware/cmi5",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "A JavaScript library implementing the cmi5 specification for AUs during runtime.",
   "repository": "https://github.com/RusticiSoftware/cmi5.js",
   "license": "Apache-2.0",
